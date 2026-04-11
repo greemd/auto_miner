@@ -1,0 +1,18 @@
+services:
+  app:
+    build:
+      context: .
+      args:
+        UID: ${UID:-1000}
+    volumes:
+      - .:/workspace
+      - uv-cache:/home/developer/.cache/uv
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONDONTWRITEBYTECODE=1
+      - UV_CACHE_DIR=/home/developer/.cache/uv
+    stdin_open: true
+    tty: true
+
+volumes:
+  uv-cache:

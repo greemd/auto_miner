@@ -1,0 +1,71 @@
+# Auto Alpha Miner - Symbol Configuration
+# 별칭: yfinance 티커 매핑
+# yfinance 티커를 직접 사용할 수도 있습니다 (예: --symbol AAPL)
+
+symbols:
+  # 미국 지수
+  NASDAQ: "^IXIC"
+  SP500: "^GSPC"
+  DOW: "^DJI"
+
+  # 미국 ETF
+  SPY: "SPY"
+  QQQ: "QQQ"
+  IWM: "IWM"
+  DIA: "DIA"
+  VTI: "VTI"
+
+  # 아시아 지수
+  KOSPI: "^KS11"
+  NIKKEI: "^N225"
+  HANGSENG: "^HSI"
+  SHANGHAI: "000001.SS"
+
+  # 유럽 지수
+  FTSE: "^FTSE"
+  DAX: "^GDAXI"
+
+  # 암호화폐
+  BTC: "BTC-USD"
+  ETH: "ETH-USD"
+  SOL: "SOL-USD"
+  XRP: "XRP-USD"
+
+  # 원자재
+  GOLD: "GC=F"
+  OIL: "CL=F"
+  SILVER: "SI=F"
+
+  # 한국 주요 종목
+  SAMSUNG: "005930.KS"
+  SKHYNIX: "000660.KS"
+
+# 포트폴리오 프리셋 (run-portfolio에서 --universe로 사용)
+universes:
+  us_indices:
+    - NASDAQ
+    - SP500
+    - DOW
+  us_etf:
+    - SPY
+    - QQQ
+    - IWM
+    - DIA
+    - VTI
+  asia:
+    - KOSPI
+    - NIKKEI
+    - HANGSENG
+    - SHANGHAI
+  crypto:
+    - BTC
+    - ETH
+    - SOL
+    - XRP
+  global:
+    - SP500
+    - KOSPI
+    - NIKKEI
+    - FTSE
+    - DAX
+    - BTC

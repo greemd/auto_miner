@@ -1,0 +1,38 @@
+[project]
+name = "auto-alpha-miner"
+version = "0.1.0"
+description = "Simple auto alpha miner"
+requires-python = ">=3.12"
+dependencies = [
+    "numpy",
+    "pandas",
+    "scipy",
+    "matplotlib",
+    "scikit-learn",
+    "yfinance",
+    "pandas-ta",
+    "typer",
+    "pyarrow",
+    "pyyaml",
+]
+
+[project.scripts]
+auto-miner = "auto_alpha_miner.cli:app"
+
+[dependency-groups]
+dev = [
+    "pytest",
+    "ruff",
+    "ipython",
+    "jupyter",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.ruff]
+line-length = 88
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
