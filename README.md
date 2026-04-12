@@ -61,7 +61,7 @@ uv run auto-miner research-init
 한 사이클에서 일어나는 일:
 1. `research/journal.md`에서 기존 연구 결과와 다음 방향 확인
 2. Claude Code가 새로운 전략 코드를 작성하고 검증
-3. SPY, QQQ, BTC에 대해 백테스트 실행
+3. `config.yaml`의 `research.benchmark_symbols`에 설정된 종목들에 대해 백테스트 실행
 4. 결과를 분석하고 journal에 기록, 다음 연구 방향 업데이트
 
 반복 실행할수록 전략이 누적되고, 이전 결과를 바탕으로 점점 더 나은 전략을 탐색합니다.
