@@ -7,6 +7,7 @@ services:
     volumes:
       - .:/workspace
       - uv-cache:/home/developer/.cache/uv
+      - ${HOME}/.claude:/home/developer/.claude
     environment:
       - PYTHONUNBUFFERED=1
       - PYTHONDONTWRITEBYTECODE=1

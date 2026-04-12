@@ -7,17 +7,23 @@ Claude Code가 전략을 설계 → 코드 작성 → 백테스트 → 평가 �
 
 ### Docker 실행 (권장)
 
-필요한 것: **Docker** + [Anthropic API 키](https://console.anthropic.com/) (자동 연구 루프 사용 시)
+필요한 것: **Docker** + Claude 인증 (자동 연구 루프 사용 시)
 
 ```bash
 git clone <repo-url> && cd auto_miner
 
 # 빌드
 docker compose build
+```
 
-# API 키 설정 (자동 연구 루프 사용 시 필수)
-echo "ANTHROPIC_API_KEY=sk-ant-..." > .env
+**Claude 인증** — 자동 연구 루프(`./scripts/research_cycle.sh`)를 사용하려면 둘 중 하나를 선택하세요:
 
+| 방법 | 대상 | 설정 |
+|------|------|------|
+| **API 키** | [API 크레딧](https://console.anthropic.com/) 사용자 | `echo "ANTHROPIC_API_KEY=sk-ant-..." > .env` |
+| **Max 구독** | [Claude Max](https://claude.ai/) 구독자 | 호스트에서 `claude login` (자동으로 컨테이너에 공유됨) |
+
+```bash
 # 컨테이너 진입
 docker compose run --rm app bash
 
@@ -25,14 +31,18 @@ docker compose run --rm app bash
 uv sync --group dev
 ```
 
+> 백테스트만 사용할 경우(`uv run auto-miner run ...`) Claude 인증은 필요 없습니다.
+
 ### 로컬 실행
 
-필요한 것: **Python 3.12+**, [uv](https://docs.astral.sh/uv/), [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code) (자동 연구 루프 사용 시)
+필요한 것: **Python 3.12+**, [uv](https://docs.astral.sh/uv/)
 
 ```bash
 git clone <repo-url> && cd auto_miner
 uv sync
 ```
+
+자동 연구 루프를 사용하려면 [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code)가 추가로 필요합니다. API 키(`export ANTHROPIC_API_KEY=sk-ant-...`) 또는 `claude login`으로 인증하세요.
 
 ## 2. 사용법
 
