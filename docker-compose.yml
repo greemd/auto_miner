@@ -11,6 +11,7 @@ services:
       - PYTHONUNBUFFERED=1
       - PYTHONDONTWRITEBYTECODE=1
       - UV_CACHE_DIR=/home/developer/.cache/uv
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
     stdin_open: true
     tty: true
 

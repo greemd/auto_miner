@@ -69,3 +69,16 @@ universes:
     - FTSE
     - DAX
     - BTC
+
+# 자동 연구 루프 설정 (research-init 기본값)
+research:
+  benchmark_symbols:
+    - SP500
+    - KOSPI
+    - NIKKEI
+    - FTSE
+    - DAX
+    - BTC
+  start: "2010-01-01"
+  end: "2024-12-31"
+  capital: 100000

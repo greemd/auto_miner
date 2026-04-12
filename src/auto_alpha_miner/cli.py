@@ -187,5 +187,168 @@ def list_universes() -> None:
         typer.echo(f"  {name:15s} — {', '.join(symbols)}")
 
 
+# ── Research commands ──────────────────────────────────────────────
+
+@app.command("research-init")
+def research_init(
+    journal: str = typer.Option("research/journal.md", help="Journal file path"),
+) -> None:
+    """Initialize research journal with baseline results from existing strategies."""
+    from pathlib import Path
+    from datetime import date
+
+    from auto_alpha_miner.config import STRATEGY_REGISTRY
+    from auto_alpha_miner.research.journal import Journal, TriedApproach, create_default_journal
+    from auto_alpha_miner.research.runner import run_cycle
+
+    _load_strategies()
+
+    journal_path = Path(journal)
+    if journal_path.exists():
+        typer.echo(f"Journal already exists at {journal_path}")
+        raise typer.Exit(1)
+
+    j = create_default_journal(journal_path)
+    typer.echo("Running baseline backtests on existing strategies...")
+
+    # Map existing strategies to metadata
+    strategy_meta = {
+        "turtle": ("trend-following", ["Donchian"], {"entry_period": "20", "exit_period": "10"}),
+        "rsi": ("mean-reversion", ["RSI"], {"period": "14", "oversold": "30", "overbought": "70"}),
+        "ma_cross": ("trend-following", ["SMA"], {"fast": "50", "slow": "200"}),
+    }
+
+    approach_id = 1
+    for name in STRATEGY_REGISTRY:
+        typer.echo(f"  Running {name}...")
+        try:
+            results = run_cycle(name, j.config.benchmark_symbols, j.config.start, j.config.end, j.config.capital)
+        except Exception as e:
+            typer.echo(f"  Warning: {name} failed — {e}")
+            continue
+
+        category, indicators, params = strategy_meta.get(name, ("other", [name], {}))
+        approach = TriedApproach(
+            id=approach_id,
+            name=f"baseline_{name}",
+            date=str(date.today()),
+            approach=f"Baseline: {STRATEGY_REGISTRY[name].__doc__ or name}",
+            category=category,
+            indicators=indicators,
+            parameters=params,
+            results=results,
+            analysis="Baseline strategy for comparison.",
+            status="baseline",
+        )
+        j.add_result(approach)
+        approach_id += 1
+
+    j.update_best_results()
+    j.save()
+    typer.echo(f"\nJournal created at {journal_path} with {len(j.tried_approaches)} baseline strategies.")
+
+
+@app.command("research-run")
+def research_run(
+    strategy: str = typer.Option(..., help="Strategy name to backtest"),
+    journal: str = typer.Option("research/journal.md", help="Journal file path"),
+) -> None:
+    """Run a strategy backtest and output structured results."""
+    from pathlib import Path
+
+    from auto_alpha_miner.config import STRATEGY_REGISTRY
+    from auto_alpha_miner.research.journal import Journal
+    from auto_alpha_miner.research.runner import run_research_cycle
+
+    _load_strategies()
+
+    journal_path = Path(journal)
+    if not journal_path.exists():
+        typer.echo(f"Journal not found: {journal_path}. Run 'research-init' first.")
+        raise typer.Exit(1)
+
+    j = Journal(journal_path)
+    if j.has_strategy(strategy):
+        typer.echo(f"Strategy '{strategy}' already exists in journal. Use a different name.")
+        raise typer.Exit(1)
+
+    if strategy not in STRATEGY_REGISTRY:
+        typer.echo(f"Strategy '{strategy}' not found in registry.")
+        typer.echo(f"Available: {', '.join(STRATEGY_REGISTRY.keys())}")
+        raise typer.Exit(1)
+
+    typer.echo(f"Running {strategy} on {', '.join(j.config.benchmark_symbols)}...")
+    results = run_research_cycle(journal_path, strategy)
+
+    # Output structured results
+    typer.echo("\n=== RESEARCH RESULT ===")
+    typer.echo(f"strategy: {strategy}")
+    for symbol, metrics in results.items():
+        typer.echo(f"--- {symbol} ---")
+        for k, v in metrics.items():
+            typer.echo(f"{k}: {v}")
+    typer.echo("=== END RESULT ===")
+
+
+@app.command("research-validate")
+def research_validate(
+    file: str = typer.Option(..., help="Path to strategy .py file"),
+) -> None:
+    """Validate a generated strategy file."""
+    from pathlib import Path
+    from auto_alpha_miner.research.validator import validate_strategy_file
+
+    _load_strategies()
+
+    file_path = Path(file)
+    valid, error = validate_strategy_file(file_path)
+    if valid:
+        typer.echo("VALID")
+    else:
+        typer.echo(f"INVALID: {error}")
+        raise typer.Exit(1)
+
+
+@app.command("research-status")
+def research_status(
+    journal: str = typer.Option("research/journal.md", help="Journal file path"),
+) -> None:
+    """Print a summary of the research journal."""
+    from pathlib import Path
+    from auto_alpha_miner.research.journal import Journal
+
+    journal_path = Path(journal)
+    if not journal_path.exists():
+        typer.echo(f"Journal not found: {journal_path}. Run 'research-init' first.")
+        raise typer.Exit(1)
+
+    j = Journal(journal_path)
+
+    typer.echo(f"\n{'=' * 50}")
+    typer.echo(f"  Research Journal Status")
+    typer.echo(f"{'=' * 50}")
+    typer.echo(f"  Approaches tried:  {len(j.tried_approaches)}")
+
+    if j.tried_approaches:
+        # Find best Sharpe across all approaches
+        best_sharpe = 0.0
+        best_name = ""
+        for a in j.tried_approaches:
+            spy = a.results.get("SPY", {})
+            s = spy.get("sharpe_ratio", spy.get("sharpe", 0.0))
+            if s > best_sharpe:
+                best_sharpe = s
+                best_name = a.name
+        typer.echo(f"  Best Sharpe (SPY): {best_sharpe:.2f} ({best_name})")
+
+    typer.echo(f"{'=' * 50}")
+
+    if j.next_steps:
+        typer.echo("  Next Steps:")
+        for step in j.next_steps:
+            typer.echo(f"    - {step}")
+    typer.echo(f"{'=' * 50}\n")
+
+
 if __name__ == "__main__":
     app()

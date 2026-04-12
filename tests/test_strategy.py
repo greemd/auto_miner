@@ -91,11 +91,10 @@ class TestMACrossStrategy:
         assert "sma_slow" in prepared.columns
 
     def test_generates_signals_on_crossover(self):
-        # Start flat, go up sharply — should trigger golden cross
-        flat = [100.0] * 50
-        up = list(np.linspace(100, 200, 100))
+        # Down → up creates a golden cross (fast SMA recovers before slow)
         down = list(np.linspace(200, 80, 100))
-        prices = flat + up + down
+        up = list(np.linspace(80, 250, 150))
+        prices = down + up
         df = make_ohlcv(prices)
         strat = MovingAverageCrossStrategy(fast_period=10, slow_period=30)
         prepared = strat.prepare(df)
