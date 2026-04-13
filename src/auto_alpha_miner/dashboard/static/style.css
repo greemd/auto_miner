@@ -1,0 +1,129 @@
+/* Minimal overrides for Pico.css */
+
+:root {
+    --pico-font-size: 15px;
+}
+
+nav {
+    margin-bottom: 1rem;
+}
+
+nav ul {
+    list-style: none;
+    display: flex;
+    gap: 1.5rem;
+    padding: 0;
+    margin: 0;
+}
+
+nav a {
+    text-decoration: none;
+    font-weight: 600;
+}
+
+nav a.active {
+    border-bottom: 2px solid var(--pico-primary);
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.stat-card {
+    background: var(--pico-card-background-color);
+    border: 1px solid var(--pico-muted-border-color);
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: center;
+}
+
+.stat-card .value {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--pico-primary);
+}
+
+.stat-card .label {
+    font-size: 0.85rem;
+    color: var(--pico-muted-color);
+}
+
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 0.5rem;
+    margin: 1rem 0;
+}
+
+.metric-item {
+    background: var(--pico-card-background-color);
+    border: 1px solid var(--pico-muted-border-color);
+    border-radius: 6px;
+    padding: 0.6rem;
+    text-align: center;
+}
+
+.metric-item .value {
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.metric-item .label {
+    font-size: 0.75rem;
+    color: var(--pico-muted-color);
+}
+
+.chart-container {
+    min-height: 400px;
+    margin: 1rem 0;
+}
+
+.form-row {
+    display: flex;
+    gap: 1rem;
+    align-items: end;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+}
+
+.form-row > * {
+    flex: 1;
+    min-width: 150px;
+}
+
+.approach-card {
+    border: 1px solid var(--pico-muted-border-color);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.approach-card h4 {
+    margin-bottom: 0.5rem;
+}
+
+.badge {
+    display: inline-block;
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.badge-baseline { background: #e3f2fd; color: #1565c0; }
+.badge-done { background: #e8f5e9; color: #2e7d32; }
+
+#results-area {
+    min-height: 200px;
+}
+
+.htmx-indicator {
+    display: none;
+}
+
+.htmx-request .htmx-indicator {
+    display: inline;
+}

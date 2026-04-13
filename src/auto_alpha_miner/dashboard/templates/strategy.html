@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}Strategy Detail — Auto Alpha Miner{% endblock %}
+
+{% block content %}
+<h2>Strategy Detail</h2>
+
+<div class="form-row">
+    <div>
+        <label for="strategy-select">Strategy</label>
+        <select id="strategy-select">
+            {% for s in strategies %}
+            <option value="{{ s }}">{{ s }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div>
+        <label for="symbol-select">Symbol</label>
+        <select id="symbol-select">
+            {% for s in symbols %}
+            <option value="{{ s }}" {% if s == 'SPY' %}selected{% endif %}>{{ s }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div>
+        <label for="start-input">Start</label>
+        <input type="date" id="start-input" value="2020-01-01">
+    </div>
+    <div>
+        <label for="end-input">End</label>
+        <input type="date" id="end-input" value="2024-12-31">
+    </div>
+    <div>
+        <button id="run-btn" onclick="runBacktest()">Run Backtest</button>
+    </div>
+</div>
+
+<div id="results-area">
+    <p style="color: var(--pico-muted-color);">Select a strategy and symbol, then click "Run Backtest".</p>
+</div>
+
+<div id="metrics-area"></div>
+<div id="equity-chart" class="chart-container"></div>
+<div id="drawdown-chart"></div>
+<h3 id="trades-title" style="display:none;">Trades</h3>
+<div id="trades-table"></div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function runBacktest() {
+    const btn = document.getElementById('run-btn');
+    btn.setAttribute('aria-busy', 'true');
+    btn.textContent = 'Running...';
+    document.getElementById('results-area').innerHTML = '';
+
+    const body = {
+        strategy: document.getElementById('strategy-select').value,
+        symbol: document.getElementById('symbol-select').value,
+        start: document.getElementById('start-input').value,
+        end: document.getElementById('end-input').value,
+        capital: 100000,
+    };
+
+    try {
+        const resp = await fetch('/api/backtest', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+        });
+        const data = await resp.json();
+
+        if (data.error) {
+            document.getElementById('results-area').innerHTML = `<p style="color:red;">${data.error}</p>`;
+            return;
+        }
+
+        renderMetrics('metrics-area', data.metrics);
+        renderEquityChart('equity-chart', data);
+        renderDrawdownChart('drawdown-chart', data);
+        renderTradesTable('trades-table', data.trades);
+        document.getElementById('trades-title').style.display = 'block';
+        document.getElementById('results-area').innerHTML = '';
+    } catch (e) {
+        document.getElementById('results-area').innerHTML = `<p style="color:red;">Error: ${e.message}</p>`;
+    } finally {
+        btn.removeAttribute('aria-busy');
+        btn.textContent = 'Run Backtest';
+    }
+}
+</script>
+{% endblock %}

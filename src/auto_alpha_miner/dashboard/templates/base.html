@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Auto Alpha Miner{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+    <script src="https://cdn.plot.ly/plotly-2.35.0.min.js"></script>
+    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <main class="container">
+        <nav>
+            <ul>
+                <li><strong>Auto Alpha Miner</strong></li>
+            </ul>
+            <ul>
+                <li><a href="/" {% if active == 'overview' %}class="active"{% endif %}>Overview</a></li>
+                <li><a href="/strategy" {% if active == 'strategy' %}class="active"{% endif %}>Strategy</a></li>
+                <li><a href="/compare" {% if active == 'compare' %}class="active"{% endif %}>Compare</a></li>
+                <li><a href="/research" {% if active == 'research' %}class="active"{% endif %}>Research</a></li>
+            </ul>
+        </nav>
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <script src="/static/charts.js"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

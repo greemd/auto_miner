@@ -350,5 +350,24 @@ def research_status(
     typer.echo(f"{'=' * 50}\n")
 
 
+# ── Dashboard command ──────────────────────────────────────────────
+
+@app.command("dashboard")
+def dashboard(
+    host: str = typer.Option("127.0.0.1", help="Host to bind"),
+    port: int = typer.Option(8050, help="Port number"),
+) -> None:
+    """Start the local web dashboard."""
+    import uvicorn
+
+    _load_strategies()
+    typer.echo(f"Starting dashboard at http://{host}:{port}")
+    uvicorn.run(
+        "auto_alpha_miner.dashboard.app:app",
+        host=host,
+        port=port,
+    )
+
+
 if __name__ == "__main__":
     app()

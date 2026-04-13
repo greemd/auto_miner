@@ -71,6 +71,22 @@ uv run auto-miner research-init
 uv run auto-miner research-status
 ```
 
+### 웹 대시보드
+
+백테스트 결과를 브라우저에서 인터랙티브하게 확인합니다.
+
+```bash
+uv run auto-miner dashboard            # http://127.0.0.1:8050
+uv run auto-miner dashboard --port 3000  # 포트 변경
+```
+
+| 페이지 | 설명 |
+|--------|------|
+| **Overview** | 전략×심볼 Sharpe 히트맵, Best Results 테이블 |
+| **Strategy** | 전략+심볼 선택 → 즉시 백테스트 → equity curve / drawdown 차트 + 메트릭 |
+| **Compare** | 여러 전략을 한 종목에 오버레이 비교 |
+| **Research** | 연구 저널 전체 내용 열람 |
+
 ### 수동 백테스트
 
 특정 전략을 직접 실행할 수도 있습니다.
@@ -215,9 +231,15 @@ auto_miner/
 │   ├── evaluation/
 │   │   ├── metrics.py              # Sharpe, MDD, CAGR 등
 │   │   └── report.py              # 텍스트/차트 리포트
-│   └── research/
-│       ├── journal.py              # 저널 파싱/관리
-│       ├── validator.py            # 전략 파일 검증
-│       └── runner.py               # 벤치마크 백테스트 실행
+│   ├── research/
+│   │   ├── journal.py              # 저널 파싱/관리
+│   │   ├── validator.py            # 전략 파일 검증
+│   │   └── runner.py               # 벤치마크 백테스트 실행
+│   └── dashboard/
+│       ├── app.py                  # FastAPI 앱
+│       ├── services.py             # 백테스트 결과 → JSON 변환
+│       ├── routes/                 # overview / strategy / compare / research
+│       ├── templates/              # Jinja2 HTML 템플릿
+│       └── static/                 # CSS + Plotly 차트 헬퍼 JS
 └── tests/                          # 67개 테스트
 ```

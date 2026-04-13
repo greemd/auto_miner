@@ -186,7 +186,9 @@ class TestCreateDefaultJournal:
     def test_creates_with_defaults(self, tmp_path):
         p = tmp_path / "journal.md"
         j = create_default_journal(p)
-        assert j.config.benchmark_symbols == ["SPY", "QQQ", "BTC"]
+        from auto_alpha_miner.config import RESEARCH_CONFIG
+        expected = RESEARCH_CONFIG.get("benchmark_symbols", ["SPY", "QQQ", "BTC"])
+        assert j.config.benchmark_symbols == expected
         assert len(j.research_directions) > 0
         assert len(j.next_steps) > 0
         j.save()

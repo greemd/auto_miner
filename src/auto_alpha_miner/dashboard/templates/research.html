@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}Research — Auto Alpha Miner{% endblock %}
+
+{% block content %}
+<h2>Research Journal</h2>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="value">{{ journal.approaches | length }}</div>
+        <div class="label">Approaches Tried</div>
+    </div>
+    <div class="stat-card">
+        <div class="value">{{ journal.config.benchmark_symbols | join(', ') }}</div>
+        <div class="label">Benchmark Symbols</div>
+    </div>
+    <div class="stat-card">
+        <div class="value">{{ journal.config.start }} ~ {{ journal.config.end }}</div>
+        <div class="label">Period</div>
+    </div>
+</div>
+
+{% if journal.next_steps %}
+<h3>Next Steps</h3>
+<ul>
+    {% for step in journal.next_steps %}
+    <li>{{ step }}</li>
+    {% endfor %}
+</ul>
+{% endif %}
+
+{% if journal.directions %}
+<h3>Research Directions</h3>
+<ul>
+    {% for d in journal.directions %}
+    <li>{{ d }}</li>
+    {% endfor %}
+</ul>
+{% endif %}
+
+<h3>Tried Approaches</h3>
+{% for a in journal.approaches | reverse %}
+<div class="approach-card">
+    <h4>
+        [{{ "%03d" | format(a.id) }}] {{ a.name }}
+        <span class="badge {% if a.status == 'baseline' %}badge-baseline{% else %}badge-done{% endif %}">
+            {{ a.status }}
+        </span>
+    </h4>
+    <p><strong>{{ a.approach }}</strong></p>
+    <p>
+        <small>
+            Category: {{ a.category }} |
+            Indicators: {{ a.indicators | join(', ') }} |
+            Date: {{ a.date }}
+        </small>
+    </p>
+
+    {% if a.parameters %}
+    <p><small>Parameters: {% for k, v in a.parameters.items() %}{{ k }}={{ v }}{% if not loop.last %}, {% endif %}{% endfor %}</small></p>
+    {% endif %}
+
+    {% if a.results %}
+    <table role="grid">
+        <thead>
+            <tr>
+                <th>Symbol</th>
+                <th>Sharpe</th>
+                <th>Return</th>
+                <th>MDD</th>
+                <th>Win Rate</th>
+                <th>Trades</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for sym, metrics in a.results.items() %}
+            <tr>
+                <td>{{ sym }}</td>
+                <td>{{ metrics.get('sharpe_ratio', metrics.get('sharpe', '-')) }}</td>
+                <td>{{ metrics.get('total_return', metrics.get('return', '-')) }}%</td>
+                <td>{{ metrics.get('max_drawdown', metrics.get('mdd', '-')) }}%</td>
+                <td>{{ metrics.get('win_rate', '-') }}%</td>
+                <td>{{ metrics.get('trade_count', metrics.get('trades', '-')) }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+
+    {% if a.analysis %}
+    <p><em>{{ a.analysis }}</em></p>
+    {% endif %}
+</div>
+{% endfor %}
+{% endblock %}

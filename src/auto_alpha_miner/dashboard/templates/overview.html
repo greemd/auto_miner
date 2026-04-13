@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Overview — Auto Alpha Miner{% endblock %}
+
+{% block content %}
+<h2>Overview</h2>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="value">{{ total_strategies }}</div>
+        <div class="label">Strategies Tested</div>
+    </div>
+    <div class="stat-card">
+        <div class="value">{{ best_sharpe }}</div>
+        <div class="label">Best Sharpe (SPY)</div>
+    </div>
+    <div class="stat-card">
+        <div class="value">{{ best_name }}</div>
+        <div class="label">Best Strategy</div>
+    </div>
+</div>
+
+<h3>Best Results</h3>
+<table role="grid">
+    <thead>
+        <tr>
+            <th>Rank</th>
+            <th>Strategy</th>
+            <th>Category</th>
+            {% for sym in symbols %}
+            <th>Sharpe ({{ sym }})</th>
+            {% endfor %}
+        </tr>
+    </thead>
+    <tbody>
+        {% for a in approaches %}
+        {% if a.results %}
+        <tr>
+            <td>{{ loop.index }}</td>
+            <td><strong>{{ a.name }}</strong></td>
+            <td>{{ a.category }}</td>
+            {% for sym in symbols %}
+            <td>
+                {% set sr = a.results.get(sym, {}) %}
+                {{ sr.get('sharpe_ratio', sr.get('sharpe', '-')) }}
+            </td>
+            {% endfor %}
+        </tr>
+        {% endif %}
+        {% endfor %}
+    </tbody>
+</table>
+
+<h3>Sharpe Ratio Heatmap</h3>
+<div id="heatmap-chart" class="chart-container"></div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const heatmapData = {{ heatmap | tojson }};
+    renderHeatmap('heatmap-chart', heatmapData);
+</script>
+{% endblock %}
