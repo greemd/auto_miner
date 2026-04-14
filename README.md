@@ -175,16 +175,16 @@ universes:
 | `--rebalance M` | 매월 마지막 거래일에 균등 재조정 |
 | `--rebalance Q` | 매분기 마지막 거래일에 균등 재조정 |
 
-### 연구 저널 설정 (`research/journal.md`)
+### 연구 설정 (`config.yaml`)
 
-`research-init`으로 생성되는 journal의 Configuration 섹션에서 벤치마크 심볼, 기간, 자본금을 수정할 수 있습니다.
+`config.yaml`의 `research` 섹션에서 벤치마크 심볼, 기간, 자본금을 설정합니다. `research-init` 시 이 값이 journal에 반영됩니다.
 
-```markdown
-## Configuration
-- **benchmark_symbols**: SPY, QQQ, BTC
-- **start**: 2020-01-01
-- **end**: 2024-12-31
-- **capital**: 100000
+```yaml
+research:
+  benchmark_symbols: [SP500, KOSPI, NIKKEI, FTSE, DAX, BTC]
+  start: "2010-01-01"
+  end: "2024-12-31"
+  capital: 100000
 ```
 
 ### 평가 지표
