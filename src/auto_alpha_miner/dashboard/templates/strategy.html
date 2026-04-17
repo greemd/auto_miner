@@ -1,56 +1,72 @@
 {% extends "base.html" %}
-{% block title %}Strategy Detail — Auto Alpha Miner{% endblock %}
+{% block title %}Backtest — Auto Alpha Miner{% endblock %}
+{% block page_title %}<span data-i18n="backtest.title">Backtest</span>{% endblock %}
 
 {% block content %}
-<h2>Strategy Detail</h2>
-
-<div class="form-row">
-    <div>
-        <label for="strategy-select">Strategy</label>
-        <select id="strategy-select">
-            {% for s in strategies %}
-            <option value="{{ s }}">{{ s }}</option>
-            {% endfor %}
-        </select>
-    </div>
-    <div>
-        <label for="symbol-select">Symbol</label>
-        <select id="symbol-select">
-            {% for s in symbols %}
-            <option value="{{ s }}" {% if s == 'SPY' %}selected{% endif %}>{{ s }}</option>
-            {% endfor %}
-        </select>
-    </div>
-    <div>
-        <label for="start-input">Start</label>
-        <input type="date" id="start-input" value="2020-01-01">
-    </div>
-    <div>
-        <label for="end-input">End</label>
-        <input type="date" id="end-input" value="2024-12-31">
-    </div>
-    <div>
-        <button id="run-btn" onclick="runBacktest()">Run Backtest</button>
+<div class="card" style="margin-bottom: 24px;">
+    <div class="form-row">
+        <div class="form-group">
+            <label for="strategy-select" data-i18n="backtest.strategy">Strategy</label>
+            <select id="strategy-select">
+                {% for s in strategies %}
+                <option value="{{ s }}">{{ s }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="symbol-select" data-i18n="backtest.symbol">Symbol</label>
+            <select id="symbol-select">
+                {% for s in symbols %}
+                <option value="{{ s }}" {% if s == 'SPY' %}selected{% endif %}>{{ s }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="start-input" data-i18n="backtest.start">Start Date</label>
+            <input type="date" id="start-input" value="2020-01-01">
+        </div>
+        <div class="form-group">
+            <label for="end-input" data-i18n="backtest.end">End Date</label>
+            <input type="date" id="end-input" value="2024-12-31">
+        </div>
+        <div class="form-group">
+            <label for="capital-input" data-i18n="backtest.capital">Capital ($)</label>
+            <input type="number" id="capital-input" value="100000" min="1000" step="10000">
+        </div>
+        <div class="form-group" style="flex: 0 0 auto;">
+            <label>&nbsp;</label>
+            <button id="run-btn" class="btn btn-primary" onclick="runBacktest()" data-i18n="backtest.run">
+                Run Backtest
+            </button>
+        </div>
     </div>
 </div>
 
 <div id="results-area">
-    <p style="color: var(--pico-muted-color);">Select a strategy and symbol, then click "Run Backtest".</p>
+    <div class="empty-state">
+        <p data-i18n="backtest.placeholder">Select a strategy and symbol, then click <strong>Run Backtest</strong> to see results.</p>
+    </div>
 </div>
 
 <div id="metrics-area"></div>
-<div id="equity-chart" class="chart-container"></div>
-<div id="drawdown-chart"></div>
-<h3 id="trades-title" style="display:none;">Trades</h3>
-<div id="trades-table"></div>
+
+<div class="grid-2">
+    <div id="equity-chart" class="chart-container" style="display:none;"></div>
+    <div id="drawdown-chart" class="chart-container chart-container-sm" style="display:none;"></div>
+</div>
+
+<div id="trades-section" style="display:none;">
+    <div class="section-title" data-i18n="backtest.tradehistory">Trade History</div>
+    <div id="trades-table"></div>
+</div>
 {% endblock %}
 
 {% block scripts %}
 <script>
 async function runBacktest() {
     const btn = document.getElementById('run-btn');
-    btn.setAttribute('aria-busy', 'true');
-    btn.textContent = 'Running...';
+    btn.classList.add('loading');
+    btn.textContent = t('backtest.running') || 'Running...';
     document.getElementById('results-area').innerHTML = '';
 
     const body = {
@@ -58,7 +74,7 @@ async function runBacktest() {
         symbol: document.getElementById('symbol-select').value,
         start: document.getElementById('start-input').value,
         end: document.getElementById('end-input').value,
-        capital: 100000,
+        capital: parseInt(document.getElementById('capital-input').value) || 100000,
     };
 
     try {
@@ -70,21 +86,30 @@ async function runBacktest() {
         const data = await resp.json();
 
         if (data.error) {
-            document.getElementById('results-area').innerHTML = `<p style="color:red;">${data.error}</p>`;
+            document.getElementById('results-area').innerHTML = `<div class="error-msg">${data.error}</div>`;
             return;
         }
 
         renderMetrics('metrics-area', data.metrics);
+
+        const eqEl = document.getElementById('equity-chart');
+        const ddEl = document.getElementById('drawdown-chart');
+        eqEl.style.display = 'block';
+        ddEl.style.display = 'block';
+        eqEl.parentElement.style.gridTemplateColumns = '1fr';
+        eqEl.parentElement.style.display = 'block';
+
         renderEquityChart('equity-chart', data);
         renderDrawdownChart('drawdown-chart', data);
+
+        document.getElementById('trades-section').style.display = 'block';
         renderTradesTable('trades-table', data.trades);
-        document.getElementById('trades-title').style.display = 'block';
         document.getElementById('results-area').innerHTML = '';
     } catch (e) {
-        document.getElementById('results-area').innerHTML = `<p style="color:red;">Error: ${e.message}</p>`;
+        document.getElementById('results-area').innerHTML = `<div class="error-msg">${t('common.error') || 'Error:'} ${e.message}</div>`;
     } finally {
-        btn.removeAttribute('aria-busy');
-        btn.textContent = 'Run Backtest';
+        btn.classList.remove('loading');
+        btn.textContent = t('backtest.run') || 'Run Backtest';
     }
 }
 </script>

@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+{% block title %}Portfolio — Auto Alpha Miner{% endblock %}
+{% block page_title %}<span data-i18n="portfolio.title">Portfolio Backtest</span>{% endblock %}
+
+{% block content %}
+<div class="card" style="margin-bottom: 24px;">
+    <div class="form-row">
+        <div class="form-group">
+            <label for="port-strategy" data-i18n="backtest.strategy">Strategy</label>
+            <select id="port-strategy">
+                {% for s in strategies %}
+                <option value="{{ s }}">{{ s }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="port-universe" data-i18n="portfolio.universe">Universe</label>
+            <select id="port-universe">
+                {% for name, syms in universes.items() %}
+                <option value="{{ name }}">{{ name }} ({{ syms | join(', ') }})</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="port-allocator" data-i18n="portfolio.allocator">Allocator</label>
+            <select id="port-allocator">
+                {% for a in allocators %}
+                <option value="{{ a }}">{{ a }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="port-rebalance" data-i18n="portfolio.rebalance">Rebalance</label>
+            <select id="port-rebalance">
+                <option value="" data-i18n="portfolio.fixed">Fixed (no rebalance)</option>
+                <option value="W" data-i18n="portfolio.weekly">Weekly</option>
+                <option value="M" selected data-i18n="portfolio.monthly">Monthly</option>
+                <option value="Q" data-i18n="portfolio.quarterly">Quarterly</option>
+            </select>
+        </div>
+    </div>
+    <div class="form-row" style="margin-bottom: 0;">
+        <div class="form-group">
+            <label for="port-start" data-i18n="backtest.start">Start Date</label>
+            <input type="date" id="port-start" value="2020-01-01">
+        </div>
+        <div class="form-group">
+            <label for="port-end" data-i18n="backtest.end">End Date</label>
+            <input type="date" id="port-end" value="2024-12-31">
+        </div>
+        <div class="form-group">
+            <label for="port-capital" data-i18n="backtest.capital">Capital ($)</label>
+            <input type="number" id="port-capital" value="100000" min="1000" step="10000">
+        </div>
+        <div class="form-group" style="flex: 0 0 auto;">
+            <label>&nbsp;</label>
+            <button id="port-btn" class="btn btn-primary" onclick="runPortfolio()" data-i18n="portfolio.run">Run Portfolio</button>
+        </div>
+    </div>
+</div>
+
+<div id="port-results">
+    <div class="empty-state">
+        <p data-i18n="portfolio.placeholder">Configure portfolio parameters and click <strong>Run Portfolio</strong>.</p>
+    </div>
+</div>
+
+<div id="port-metrics"></div>
+<div id="port-equity" class="chart-container" style="display:none;"></div>
+<div id="port-drawdown" class="chart-container chart-container-sm" style="display:none;"></div>
+
+<div id="port-weights-section" style="display:none;">
+    <div class="section-title" data-i18n="portfolio.weights">Allocation Weights</div>
+    <div id="port-weights"></div>
+</div>
+
+<div id="port-symbols-section" style="display:none;">
+    <div class="section-title" data-i18n="portfolio.persymbol">Per-Symbol Equity</div>
+    <div id="port-symbols-chart" class="chart-container"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function runPortfolio() {
+    const btn = document.getElementById('port-btn');
+    btn.classList.add('loading');
+    btn.textContent = t('portfolio.running') || 'Running...';
+    document.getElementById('port-results').innerHTML = '';
+
+    const body = {
+        strategy: document.getElementById('port-strategy').value,
+        universe: document.getElementById('port-universe').value,
+        allocator: document.getElementById('port-allocator').value,
+        rebalance: document.getElementById('port-rebalance').value || null,
+        start: document.getElementById('port-start').value,
+        end: document.getElementById('port-end').value,
+        capital: parseInt(document.getElementById('port-capital').value) || 100000,
+    };
+
+    try {
+        const resp = await fetch('/api/portfolio', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+        });
+        const data = await resp.json();
+
+        if (data.error) {
+            document.getElementById('port-results').innerHTML = `<div class="error-msg">${data.error}</div>`;
+            return;
+        }
+
+        renderMetrics('port-metrics', {
+            ...data.metrics,
+            total_commission: 0,
+            benchmark_return: 0,
+            alpha: 0,
+            beta: 0,
+        });
+
+        const eqEl = document.getElementById('port-equity');
+        eqEl.style.display = 'block';
+        Plotly.newPlot('port-equity', [{
+            x: data.equity_curve.dates,
+            y: data.equity_curve.values,
+            type: 'scatter', mode: 'lines',
+            name: 'Portfolio',
+            line: { color: '#6366f1', width: 2 },
+            fill: 'tozeroy',
+            fillcolor: 'rgba(99,102,241,0.06)',
+        }], {
+            ...darkLayout,
+            title: { text: `${data.strategy} | ${data.universe} | ${data.allocator}`, font: { size: 14, color: '#e4e6f0' } },
+            yaxis: { ...darkLayout.yaxis, title: { text: 'Equity ($)', font: { size: 11 } } },
+        }, plotConfig);
+
+        const ddEl = document.getElementById('port-drawdown');
+        ddEl.style.display = 'block';
+        renderDrawdownChart('port-drawdown', data);
+
+        document.getElementById('port-weights-section').style.display = 'block';
+        let wHtml = `<div class="table-wrap"><table><thead><tr><th>${t('table.symbol') || 'Symbol'}</th><th>${t('table.weight') || 'Weight'}</th></tr></thead><tbody>`;
+        for (const [sym, w] of Object.entries(data.weights)) {
+            wHtml += `<tr><td style="color:var(--text);font-weight:600;">${sym}</td><td>${(w * 100).toFixed(1)}%</td></tr>`;
+        }
+        wHtml += '</tbody></table></div>';
+        document.getElementById('port-weights').innerHTML = wHtml;
+
+        if (data.symbol_curves) {
+            document.getElementById('port-symbols-section').style.display = 'block';
+            const traces = Object.entries(data.symbol_curves).map(([sym, curve], i) => ({
+                x: curve.dates,
+                y: curve.values,
+                type: 'scatter', mode: 'lines',
+                name: sym,
+                line: { color: chartColors[i % chartColors.length], width: 1.5 },
+            }));
+            Plotly.newPlot('port-symbols-chart', traces, {
+                ...darkLayout,
+                title: { text: t('portfolio.persymbol') || 'Per-Symbol Equity Curves', font: { size: 14, color: '#e4e6f0' } },
+                yaxis: { ...darkLayout.yaxis, title: { text: 'Equity ($)', font: { size: 11 } } },
+            }, plotConfig);
+        }
+
+        document.getElementById('port-results').innerHTML = '';
+
+    } catch (e) {
+        document.getElementById('port-results').innerHTML = `<div class="error-msg">${t('common.error') || 'Error:'} ${e.message}</div>`;
+    } finally {
+        btn.classList.remove('loading');
+        btn.textContent = t('portfolio.run') || 'Run Portfolio';
+    }
+}
+</script>
+{% endblock %}

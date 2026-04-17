@@ -15,8 +15,39 @@ class Signal:
 
     date: pd.Timestamp
     action: Literal["BUY", "SELL", "HOLD"]
-    size: float = 1.0
+    size: float = 1.0  # fraction of capital (0.0 to 1.0)
     metadata: dict = field(default_factory=dict)
+
+
+def atr_position_size(
+    df: pd.DataFrame,
+    index: int,
+    risk_pct: float = 0.02,
+    atr_period: int = 14,
+) -> float:
+    """Calculate position size based on ATR risk.
+
+    Returns fraction of capital to risk (capped at 1.0).
+    Risk is defined as risk_pct of capital per ATR unit.
+    """
+    if index < atr_period:
+        return 1.0
+    high = df["High"].iloc[index - atr_period:index]
+    low = df["Low"].iloc[index - atr_period:index]
+    close = df["Close"].iloc[index - atr_period:index]
+    tr = pd.concat([
+        high - low,
+        (high - close.shift(1)).abs(),
+        (low - close.shift(1)).abs(),
+    ], axis=1).max(axis=1)
+    atr = tr.mean()
+    if atr == 0:
+        return 1.0
+    price = df["Close"].iloc[index]
+    # How many units can we buy with risk_pct of capital
+    # fraction = risk_pct * capital / (atr * price) * price / capital = risk_pct / (atr / price)
+    fraction = risk_pct / (atr / price)
+    return min(fraction, 1.0)
 
 
 class BaseStrategy(ABC):

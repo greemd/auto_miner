@@ -1,94 +1,520 @@
 {% extends "base.html" %}
 {% block title %}Research — Auto Alpha Miner{% endblock %}
+{% block page_title %}<span data-i18n="research.title">AI Research Console</span>{% endblock %}
 
 {% block content %}
-<h2>Research Journal</h2>
-
 <div class="stats-grid">
     <div class="stat-card">
-        <div class="value">{{ journal.approaches | length }}</div>
-        <div class="label">Approaches Tried</div>
+        <div class="label" data-i18n="research.approaches">Approaches Tried</div>
+        <div class="value accent">{{ journal.approaches | length }}</div>
     </div>
     <div class="stat-card">
-        <div class="value">{{ journal.config.benchmark_symbols | join(', ') }}</div>
-        <div class="label">Benchmark Symbols</div>
+        <div class="label" data-i18n="research.benchmarks">Benchmark Symbols</div>
+        <div class="value small-text">{{ journal.config.benchmark_symbols | join(', ') }}</div>
     </div>
     <div class="stat-card">
-        <div class="value">{{ journal.config.start }} ~ {{ journal.config.end }}</div>
-        <div class="label">Period</div>
+        <div class="label" data-i18n="research.period">Test Period</div>
+        <div class="value small-text">{{ journal.config.start }} ~ {{ journal.config.end }}</div>
     </div>
 </div>
 
-{% if journal.next_steps %}
-<h3>Next Steps</h3>
-<ul>
-    {% for step in journal.next_steps %}
-    <li>{{ step }}</li>
-    {% endfor %}
-</ul>
-{% endif %}
+<!-- Editable Next Steps & Directions -->
+<div class="grid-2" style="margin-bottom: 24px;">
+    <!-- Next Steps -->
+    <div>
+        <div class="section-title">
+            <span data-i18n="research.nextsteps">Next Steps</span>
+            <span class="edit-toggle" onclick="toggleEdit('next-steps')" data-i18n="research.edit">edit</span>
+        </div>
+        <div class="card editable-card" id="next-steps-card">
+            <div id="next-steps-view">
+                <ul class="info-list" id="next-steps-list">
+                    {% for step in journal.next_steps %}
+                    <li>{{ step }}</li>
+                    {% endfor %}
+                </ul>
+                {% if not journal.next_steps %}
+                <div class="empty-state" style="padding: 20px;"><p data-i18n="research.nextsteps.empty">No next steps defined yet.</p></div>
+                {% endif %}
+            </div>
+            <div id="next-steps-edit" style="display: none;">
+                <div id="next-steps-items">
+                    {% for step in journal.next_steps %}
+                    <div class="editable-item">
+                        <input type="text" value="{{ step }}" class="editable-input">
+                        <button class="btn-icon btn-delete" onclick="removeItem(this)" title="Delete">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        </button>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="editable-actions">
+                    <div class="add-row">
+                        <input type="text" id="next-steps-new" class="editable-input" data-i18n-placeholder="ph.addstep" placeholder="Add new step...">
+                        <button class="btn btn-primary btn-sm" onclick="addItem('next-steps')" data-i18n="research.add">Add</button>
+                    </div>
+                    <div class="save-row">
+                        <button class="btn btn-primary" onclick="saveList('next-steps')" data-i18n="research.save">Save</button>
+                        <button class="btn btn-secondary" onclick="cancelEdit('next-steps')" data-i18n="research.cancel">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-{% if journal.directions %}
-<h3>Research Directions</h3>
-<ul>
-    {% for d in journal.directions %}
-    <li>{{ d }}</li>
-    {% endfor %}
-</ul>
-{% endif %}
+    <!-- Research Directions -->
+    <div>
+        <div class="section-title">
+            <span data-i18n="research.directions">Research Directions</span>
+            <span class="edit-toggle" onclick="toggleEdit('directions')" data-i18n="research.edit">edit</span>
+        </div>
+        <div class="card editable-card" id="directions-card">
+            <div id="directions-view">
+                <ul class="info-list" id="directions-list">
+                    {% for d in journal.directions %}
+                    <li>{{ d }}</li>
+                    {% endfor %}
+                </ul>
+                {% if not journal.directions %}
+                <div class="empty-state" style="padding: 20px;"><p data-i18n="research.directions.empty">No research directions defined yet.</p></div>
+                {% endif %}
+            </div>
+            <div id="directions-edit" style="display: none;">
+                <div id="directions-items">
+                    {% for d in journal.directions %}
+                    <div class="editable-item">
+                        <input type="text" value="{{ d }}" class="editable-input">
+                        <button class="btn-icon btn-delete" onclick="removeItem(this)" title="Delete">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        </button>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="editable-actions">
+                    <div class="add-row">
+                        <input type="text" id="directions-new" class="editable-input" data-i18n-placeholder="ph.adddirection" placeholder="Add new direction...">
+                        <button class="btn btn-primary btn-sm" onclick="addItem('directions')" data-i18n="research.add">Add</button>
+                    </div>
+                    <div class="save-row">
+                        <button class="btn btn-primary" onclick="saveList('directions')" data-i18n="research.save">Save</button>
+                        <button class="btn btn-secondary" onclick="cancelEdit('directions')" data-i18n="research.cancel">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
-<h3>Tried Approaches</h3>
+<!-- AI Research Cycle -->
+<div class="section-title" data-i18n="research.aicycle.title">AI Research Cycle</div>
+<div class="card" style="margin-bottom: 24px; border-color: rgba(99,102,241,0.25); background: linear-gradient(135deg, rgba(99,102,241,0.06) 0%, rgba(168,85,247,0.03) 100%);">
+    <div style="display: flex; align-items: flex-start; gap: 20px;">
+        <div style="flex: 1;">
+            <div style="font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 6px;" data-i18n="research.aicycle.subtitle">Autonomous Strategy Discovery</div>
+            <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 16px;" data-i18n="research.aicycle.desc">
+                AI reads the research journal, identifies unexplored directions, generates a <strong>brand new strategy</strong> (Python code),
+                validates it, backtests across all benchmark markets, and records the results &mdash; fully autonomous, no manual input needed.
+            </div>
+            <div style="display: flex; gap: 12px; align-items: center;">
+                <button id="ai-cycle-btn" class="btn btn-primary" onclick="startAiCycle()" data-i18n="research.aicycle.start">
+                    Start AI Cycle
+                </button>
+                <span id="ai-cycle-status" style="font-size: 12px; color: var(--text-muted);"></span>
+            </div>
+        </div>
+        <div id="ai-cycle-result" style="display: none; min-width: 200px;"></div>
+    </div>
+</div>
+
+<!-- Manual Run -->
+<div class="section-title" data-i18n="research.manual.title">Manual Backtest</div>
+<div class="card run-research-card" style="margin-bottom: 24px;">
+    <div class="run-research-header">
+        <div class="run-research-desc">
+            <span data-i18n="research.manual.desc">Run an existing strategy across</span> <strong>{{ journal.config.benchmark_symbols | join(', ') }}</strong> ({{ journal.config.start }} ~ {{ journal.config.end }})
+        </div>
+    </div>
+    <div class="form-row" style="margin-bottom: 0;">
+        <div class="form-group">
+            <label for="research-strategy" data-i18n="backtest.strategy">Strategy</label>
+            <select id="research-strategy">
+                {% for s in strategies %}
+                <option value="{{ s }}" {{ 'disabled' if s in tested_strategies }}>
+                    {{ s }}{% if s in tested_strategies %} (tested){% endif %}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="research-category" data-i18n="research.manual.category">Category</label>
+            <select id="research-category">
+                <option value="trend-following" data-i18n="cat.trend-following">trend-following</option>
+                <option value="mean-reversion" data-i18n="cat.mean-reversion">mean-reversion</option>
+                <option value="momentum" data-i18n="cat.momentum">momentum</option>
+                <option value="breakout" data-i18n="cat.breakout">breakout</option>
+                <option value="volatility" data-i18n="cat.volatility">volatility</option>
+                <option value="other" data-i18n="cat.other">other</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="research-indicators" data-i18n="research.manual.indicators">Indicators (comma-separated)</label>
+            <input type="text" id="research-indicators" data-i18n-placeholder="research.manual.indicators.ph" placeholder="e.g. RSI, MACD, EMA">
+        </div>
+        <div class="form-group" style="flex: 0 0 auto;">
+            <label>&nbsp;</label>
+            <button id="run-research-btn" class="btn btn-primary" onclick="runResearch()" data-i18n="research.manual.run">
+                Run Research
+            </button>
+        </div>
+    </div>
+    <div style="margin-top: 12px;">
+        <div class="form-group" style="margin-bottom: 8px;">
+            <label for="research-desc" data-i18n="research.manual.approach">Approach Description</label>
+            <input type="text" id="research-desc" data-i18n-placeholder="research.manual.approach.ph" placeholder="Brief description of the strategy approach">
+        </div>
+        <div class="form-group">
+            <label for="research-analysis" data-i18n="research.manual.analysis">Analysis / Hypothesis</label>
+            <input type="text" id="research-analysis" data-i18n-placeholder="research.manual.analysis.ph" placeholder="Why this strategy might work, what you're testing">
+        </div>
+    </div>
+
+    <div id="research-result" style="display: none; margin-top: 16px;">
+        <div id="research-result-content"></div>
+    </div>
+    <div id="research-error" style="display: none; margin-top: 16px;"></div>
+</div>
+
+<div class="section-title" data-i18n="research.tried.title">Tried Approaches</div>
 {% for a in journal.approaches | reverse %}
 <div class="approach-card">
-    <h4>
-        [{{ "%03d" | format(a.id) }}] {{ a.name }}
-        <span class="badge {% if a.status == 'baseline' %}badge-baseline{% else %}badge-done{% endif %}">
-            {{ a.status }}
-        </span>
-    </h4>
-    <p><strong>{{ a.approach }}</strong></p>
-    <p>
-        <small>
-            Category: {{ a.category }} |
-            Indicators: {{ a.indicators | join(', ') }} |
-            Date: {{ a.date }}
-        </small>
-    </p>
+    <div class="approach-header">
+        <div>
+            <span class="approach-name">
+                <span class="approach-id">#{{ "%03d" | format(a.id) }}</span>
+                {{ a.name }}
+            </span>
+        </div>
+        <span class="badge badge-{{ a.status }}">{{ a.status }}</span>
+    </div>
+
+    <div class="approach-desc">{{ a.approach }}</div>
+
+    <div class="approach-meta">
+        <div class="approach-meta-item">
+            <span class="tag">{{ a.category }}</span>
+        </div>
+        <div class="approach-meta-item" style="color: var(--text-muted);">
+            {% for ind in a.indicators %}<span class="tag" style="margin-right: 4px;">{{ ind }}</span>{% endfor %}
+        </div>
+        <div class="approach-meta-item" style="color: var(--text-muted);">
+            {{ a.date }}
+        </div>
+    </div>
 
     {% if a.parameters %}
-    <p><small>Parameters: {% for k, v in a.parameters.items() %}{{ k }}={{ v }}{% if not loop.last %}, {% endif %}{% endfor %}</small></p>
+    <div style="margin-bottom: 12px;">
+        {% for k, v in a.parameters.items() %}
+        <span class="tag" style="margin-right: 4px; margin-bottom: 4px;">{{ k }}={{ v }}</span>
+        {% endfor %}
+    </div>
     {% endif %}
 
     {% if a.results %}
-    <table role="grid">
-        <thead>
-            <tr>
-                <th>Symbol</th>
-                <th>Sharpe</th>
-                <th>Return</th>
-                <th>MDD</th>
-                <th>Win Rate</th>
-                <th>Trades</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for sym, metrics in a.results.items() %}
-            <tr>
-                <td>{{ sym }}</td>
-                <td>{{ metrics.get('sharpe_ratio', metrics.get('sharpe', '-')) }}</td>
-                <td>{{ metrics.get('total_return', metrics.get('return', '-')) }}%</td>
-                <td>{{ metrics.get('max_drawdown', metrics.get('mdd', '-')) }}%</td>
-                <td>{{ metrics.get('win_rate', '-') }}%</td>
-                <td>{{ metrics.get('trade_count', metrics.get('trades', '-')) }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div class="table-wrap" style="margin: 0;">
+        <table>
+            <thead>
+                <tr>
+                    <th data-i18n="table.symbol">Symbol</th>
+                    <th data-i18n="table.sharpe">Sharpe</th>
+                    <th data-i18n="table.return">Return</th>
+                    <th data-i18n="table.cagr">CAGR</th>
+                    <th data-i18n="table.mdd">MDD</th>
+                    <th data-i18n="table.winrate">Win Rate</th>
+                    <th data-i18n="table.pf">P/F</th>
+                    <th data-i18n="table.trades">Trades</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sym, metrics in a.results.items() %}
+                <tr>
+                    <td style="color: var(--text); font-weight: 500;">{{ sym }}</td>
+                    <td>
+                        {% set sharpe = metrics.get('sharpe_ratio', metrics.get('sharpe', 0)) %}
+                        <span style="color: {{ '#22c55e' if sharpe >= 0.5 else '#f59e0b' if sharpe >= 0 else '#ef4444' }}">
+                            {{ "%.2f"|format(sharpe) }}
+                        </span>
+                    </td>
+                    <td>
+                        {% set ret = metrics.get('total_return', metrics.get('return', 0)) %}
+                        <span style="color: {{ '#22c55e' if ret >= 0 else '#ef4444' }}">
+                            {{ "%.1f"|format(ret) }}%
+                        </span>
+                    </td>
+                    <td>
+                        {% set cagr = metrics.get('cagr', 0) %}
+                        <span style="color: {{ '#22c55e' if cagr >= 0 else '#ef4444' }}">
+                            {{ "%.1f"|format(cagr) }}%
+                        </span>
+                    </td>
+                    <td style="color: #ef4444;">{{ "%.1f"|format(metrics.get('max_drawdown', metrics.get('mdd', 0))) }}%</td>
+                    <td>{{ "%.1f"|format(metrics.get('win_rate', 0)) }}%</td>
+                    <td>{{ "%.2f"|format(metrics.get('profit_factor', metrics.get('pf', 0))) }}</td>
+                    <td>{{ metrics.get('trade_count', metrics.get('trades', 0))|int }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
     {% endif %}
 
     {% if a.analysis %}
-    <p><em>{{ a.analysis }}</em></p>
+    <div class="approach-analysis">{{ a.analysis }}</div>
     {% endif %}
 </div>
 {% endfor %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+const apiMap = {
+    'next-steps': '/api/research/next-steps',
+    'directions': '/api/research/directions',
+};
+
+function toggleEdit(section) {
+    document.getElementById(section + '-view').style.display = 'none';
+    document.getElementById(section + '-edit').style.display = 'block';
+    document.getElementById(section + '-card').classList.add('editing');
+}
+
+function cancelEdit(section) {
+    document.getElementById(section + '-view').style.display = 'block';
+    document.getElementById(section + '-edit').style.display = 'none';
+    document.getElementById(section + '-card').classList.remove('editing');
+}
+
+function removeItem(btn) {
+    btn.closest('.editable-item').remove();
+}
+
+function addItem(section) {
+    const input = document.getElementById(section + '-new');
+    const text = input.value.trim();
+    if (!text) return;
+
+    const container = document.getElementById(section + '-items');
+    const div = document.createElement('div');
+    div.className = 'editable-item';
+    div.innerHTML = `
+        <input type="text" value="${text}" class="editable-input">
+        <button class="btn-icon btn-delete" onclick="removeItem(this)" title="Delete">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+    `;
+    container.appendChild(div);
+    input.value = '';
+    input.focus();
+}
+
+document.getElementById('next-steps-new').addEventListener('keydown', e => { if (e.key === 'Enter') addItem('next-steps'); });
+document.getElementById('directions-new').addEventListener('keydown', e => { if (e.key === 'Enter') addItem('directions'); });
+
+async function saveList(section) {
+    const container = document.getElementById(section + '-items');
+    const inputs = container.querySelectorAll('.editable-input');
+    const items = Array.from(inputs).map(i => i.value.trim()).filter(v => v);
+
+    try {
+        const resp = await fetch(apiMap[section], {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ items }),
+        });
+        const data = await resp.json();
+
+        if (data.ok) {
+            const list = document.getElementById(section + '-list') || document.createElement('ul');
+            list.id = section + '-list';
+            list.className = 'info-list';
+            list.innerHTML = data.items.map(item => `<li>${item}</li>`).join('');
+
+            const viewDiv = document.getElementById(section + '-view');
+            viewDiv.innerHTML = '';
+            viewDiv.appendChild(list);
+
+            showToast(t('research.saved') || 'Saved successfully');
+            cancelEdit(section);
+        }
+    } catch (e) {
+        showToast((t('common.error') || 'Error:') + ' ' + e.message, true);
+    }
+}
+
+// --- AI Research Cycle ---
+let aiPollInterval = null;
+
+async function startAiCycle() {
+    const btn = document.getElementById('ai-cycle-btn');
+    const status = document.getElementById('ai-cycle-status');
+    const resultDiv = document.getElementById('ai-cycle-result');
+
+    btn.classList.add('loading');
+    btn.textContent = t('research.aicycle.starting') || 'Starting...';
+    btn.disabled = true;
+    status.textContent = t('research.aicycle.init') || 'Initializing...';
+    resultDiv.style.display = 'none';
+
+    try {
+        const resp = await fetch('/api/research/ai-cycle', { method: 'POST' });
+        const data = await resp.json();
+
+        if (!data.ok) {
+            status.innerHTML = `<span style="color: var(--red);">${data.error}</span>`;
+            btn.classList.remove('loading');
+            btn.textContent = t('research.aicycle.start') || 'Start AI Cycle';
+            btn.disabled = false;
+            return;
+        }
+
+        status.textContent = t('research.aicycle.running1') || 'AI is researching... (this may take a few minutes)';
+        btn.textContent = t('compare.running') || 'Running...';
+
+        aiPollInterval = setInterval(async () => {
+            try {
+                const sr = await fetch('/api/research/ai-cycle/status');
+                const sd = await sr.json();
+
+                if (sd.status === 'running') {
+                    status.textContent = t('research.aicycle.running2') || 'AI is researching... (generating strategy, backtesting, updating journal)';
+                } else if (sd.status === 'completed') {
+                    clearInterval(aiPollInterval);
+                    btn.classList.remove('loading');
+                    btn.disabled = false;
+
+                    if (sd.ok) {
+                        btn.textContent = t('research.aicycle.start') || 'Start AI Cycle';
+                        status.innerHTML = `<span style="color: var(--green);">${t('research.aicycle.success') || 'Cycle completed successfully!'}</span>`;
+                        resultDiv.style.display = 'block';
+                        resultDiv.innerHTML = `<div class="research-success" style="padding: 12px;">
+                            <div style="font-size: 13px; font-weight: 600; color: var(--green); margin-bottom: 4px;">${t('research.aicycle.newstrategy') || 'New strategy discovered'}</div>
+                            <div style="font-size: 12px; color: var(--text-secondary);">${t('research.aicycle.updated') || 'Journal updated. Refresh to see results.'}</div>
+                            <button class="btn btn-primary btn-sm" style="margin-top: 8px;" onclick="location.reload()">${t('research.aicycle.refresh') || 'Refresh'}</button>
+                        </div>`;
+                        showToast(t('research.aicycle.completed') || 'AI research cycle completed!');
+                    } else {
+                        btn.textContent = t('research.aicycle.retry') || 'Retry AI Cycle';
+                        status.innerHTML = `<span style="color: var(--red);">${t('research.aicycle.failed') || 'Cycle failed'}</span>`;
+                        resultDiv.style.display = 'block';
+                        resultDiv.innerHTML = `<div class="error-msg" style="font-size: 11px; max-height: 100px; overflow: auto;">${sd.stderr_tail || 'Unknown error'}</div>`;
+                    }
+                }
+            } catch (e) { /* ignore poll errors */ }
+        }, 5000);
+
+    } catch (e) {
+        status.innerHTML = `<span style="color: var(--red);">${t('common.error') || 'Error:'} ${e.message}</span>`;
+        btn.classList.remove('loading');
+        btn.textContent = t('research.aicycle.start') || 'Start AI Cycle';
+        btn.disabled = false;
+    }
+}
+
+// --- Manual Run ---
+async function runResearch() {
+    const btn = document.getElementById('run-research-btn');
+    const strategy = document.getElementById('research-strategy').value;
+    const resultDiv = document.getElementById('research-result');
+    const resultContent = document.getElementById('research-result-content');
+    const errorDiv = document.getElementById('research-error');
+
+    resultDiv.style.display = 'none';
+    errorDiv.style.display = 'none';
+
+    btn.classList.add('loading');
+    btn.textContent = t('compare.running') || 'Running...';
+
+    const body = {
+        strategy: strategy,
+        category: document.getElementById('research-category').value,
+        indicators: document.getElementById('research-indicators').value,
+        approach_desc: document.getElementById('research-desc').value,
+        analysis: document.getElementById('research-analysis').value,
+    };
+
+    try {
+        const resp = await fetch('/api/research/run', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+        });
+        const data = await resp.json();
+
+        if (!data.ok) {
+            errorDiv.innerHTML = `<div class="error-msg">${data.error}</div>`;
+            errorDiv.style.display = 'block';
+            return;
+        }
+
+        let html = `<div class="research-success">
+            <div class="research-success-header">
+                <span class="badge badge-tested">completed</span>
+                <strong>#${String(data.approach_id).padStart(3, '0')} ${data.name}</strong>
+            </div>
+            <div class="table-wrap" style="margin-top: 12px;">
+                <table>
+                    <thead><tr><th>${t('table.symbol') || 'Symbol'}</th><th>${t('table.sharpe') || 'Sharpe'}</th><th>${t('table.return') || 'Return'}</th><th>${t('table.mdd') || 'MDD'}</th></tr></thead>
+                    <tbody>`;
+
+        for (const [sym, m] of Object.entries(data.results)) {
+            const sharpeColor = m.sharpe >= 0.5 ? '#22c55e' : m.sharpe >= 0 ? '#f59e0b' : '#ef4444';
+            const retColor = m.return >= 0 ? '#22c55e' : '#ef4444';
+            html += `<tr>
+                <td style="color: var(--text); font-weight: 500;">${sym}</td>
+                <td style="color: ${sharpeColor}">${m.sharpe}</td>
+                <td style="color: ${retColor}">${m.return}%</td>
+                <td style="color: #ef4444">${m.mdd}%</td>
+            </tr>`;
+        }
+
+        html += `</tbody></table></div>
+            <div style="margin-top: 12px; text-align: center;">
+                <button class="btn btn-primary btn-sm" onclick="location.reload()">${t('research.refreshpage') || 'Refresh Page'}</button>
+            </div>
+        </div>`;
+
+        resultContent.innerHTML = html;
+        resultDiv.style.display = 'block';
+        showToast(t('research.completed') || 'Research completed and saved!');
+
+        const opt = document.querySelector(`#research-strategy option[value="${strategy}"]`);
+        if (opt) {
+            opt.disabled = true;
+            opt.textContent = strategy + ' (tested)';
+        }
+
+    } catch (e) {
+        errorDiv.innerHTML = `<div class="error-msg">${t('common.error') || 'Error:'} ${e.message}</div>`;
+        errorDiv.style.display = 'block';
+    } finally {
+        btn.classList.remove('loading');
+        btn.textContent = t('research.manual.run') || 'Run Research';
+    }
+}
+
+function showToast(msg, isError) {
+    const existing = document.querySelector('.toast');
+    if (existing) existing.remove();
+
+    const toast = document.createElement('div');
+    toast.className = 'toast' + (isError ? ' toast-error' : '');
+    toast.textContent = msg;
+    document.body.appendChild(toast);
+
+    requestAnimationFrame(() => toast.classList.add('show'));
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+    }, 2500);
+}
+</script>
 {% endblock %}

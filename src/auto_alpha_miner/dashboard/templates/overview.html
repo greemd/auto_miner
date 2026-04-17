@@ -1,57 +1,328 @@
 {% extends "base.html" %}
-{% block title %}Overview — Auto Alpha Miner{% endblock %}
+{% block title %}AI Alpha Lab — Auto Alpha Miner{% endblock %}
+{% block page_title %}<span data-i18n="overview.title">AI Alpha Lab</span>{% endblock %}
 
 {% block content %}
-<h2>Overview</h2>
 
-<div class="stats-grid">
-    <div class="stat-card">
-        <div class="value">{{ total_strategies }}</div>
-        <div class="label">Strategies Tested</div>
+<!-- AI Engine Status -->
+<div class="ai-engine-banner">
+    <div class="ai-engine-left">
+        <div class="ai-engine-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a4 4 0 0 1 4 4v1a3 3 0 0 1 3 3v1a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-1a3 3 0 0 1-3 3H9a3 3 0 0 1-3-3H5a2 2 0 0 1-2-2v-2a2 2 0 0 1 2-2V8a3 3 0 0 1 3-3V6a4 4 0 0 1 4-4z"/><circle cx="9" cy="13" r="1" fill="currentColor"/><circle cx="15" cy="13" r="1" fill="currentColor"/></svg>
+        </div>
+        <div>
+            <div class="ai-engine-title" data-i18n="overview.engine.title">AI Research Engine</div>
+            <div class="ai-engine-meta">
+                <span class="ai-engine-model">{{ ai_model }}</span>
+                <span class="ai-engine-sep" data-i18n="common.via">via</span>
+                <span class="ai-engine-runner">{{ ai_engine }}</span>
+            </div>
+        </div>
     </div>
-    <div class="stat-card">
-        <div class="value">{{ best_sharpe }}</div>
-        <div class="label">Best Sharpe (SPY)</div>
-    </div>
-    <div class="stat-card">
-        <div class="value">{{ best_name }}</div>
-        <div class="label">Best Strategy</div>
+    <div class="ai-engine-stats">
+        <div class="ai-engine-stat">
+            <span class="ai-engine-stat-value">{{ total_cycles }}</span>
+            <span class="ai-engine-stat-label" data-i18n="overview.engine.cycles">Cycles</span>
+        </div>
+        <div class="ai-engine-stat">
+            <span class="ai-engine-stat-value">{{ discovered | length }}</span>
+            <span class="ai-engine-stat-label" data-i18n="overview.engine.discovered">Discovered</span>
+        </div>
+        <div class="ai-engine-stat">
+            <span class="ai-engine-stat-value">{{ num_indicators }}</span>
+            <span class="ai-engine-stat-label" data-i18n="overview.engine.indicators">Indicators</span>
+        </div>
+        <div class="ai-engine-stat">
+            <span class="ai-engine-stat-value accent-text">{{ beat_rate|round(0)|int }}%</span>
+            <span class="ai-engine-stat-label" data-i18n="overview.engine.beatrate">Beat Rate</span>
+        </div>
     </div>
 </div>
 
-<h3>Best Results</h3>
-<table role="grid">
-    <thead>
-        <tr>
-            <th>Rank</th>
-            <th>Strategy</th>
-            <th>Category</th>
-            {% for sym in symbols %}
-            <th>Sharpe ({{ sym }})</th>
-            {% endfor %}
-        </tr>
-    </thead>
-    <tbody>
-        {% for a in approaches %}
-        {% if a.results %}
-        <tr>
-            <td>{{ loop.index }}</td>
-            <td><strong>{{ a.name }}</strong></td>
-            <td>{{ a.category }}</td>
-            {% for sym in symbols %}
-            <td>
-                {% set sr = a.results.get(sym, {}) %}
-                {{ sr.get('sharpe_ratio', sr.get('sharpe', '-')) }}
-            </td>
-            {% endfor %}
-        </tr>
-        {% endif %}
-        {% endfor %}
-    </tbody>
-</table>
+<!-- Pipeline Visualization -->
+<div class="pipeline">
+    <div class="pipeline-step">
+        <div class="pipeline-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </div>
+        <div class="pipeline-label" data-i18n="overview.pipeline.hypothesis">Hypothesis</div>
+        <div class="pipeline-value">{{ directions | length }} <span data-i18n="overview.pipeline.directions">directions</span></div>
+    </div>
+    <div class="pipeline-arrow">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+    </div>
+    <div class="pipeline-step">
+        <div class="pipeline-icon accent-bg">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+        </div>
+        <div class="pipeline-label" data-i18n="overview.pipeline.stratgen">Strategy Gen</div>
+        <div class="pipeline-value">{{ num_indicators }} <span data-i18n="overview.pipeline.indicators">indicators</span></div>
+    </div>
+    <div class="pipeline-arrow">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+    </div>
+    <div class="pipeline-step">
+        <div class="pipeline-icon green-bg">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22,12 18,12 15,21 9,3 6,12 2,12"/></svg>
+        </div>
+        <div class="pipeline-label" data-i18n="overview.pipeline.backtest">Backtest</div>
+        <div class="pipeline-value">{{ symbols | length }} <span data-i18n="overview.pipeline.markets">markets</span></div>
+    </div>
+    <div class="pipeline-arrow">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+    </div>
+    <div class="pipeline-step">
+        <div class="pipeline-icon yellow-bg">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        </div>
+        <div class="pipeline-label" data-i18n="overview.pipeline.evaluate">Evaluate</div>
+        <div class="pipeline-value">{{ total_approaches }} <span data-i18n="overview.pipeline.tested">tested</span></div>
+    </div>
+    <div class="pipeline-arrow">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+    </div>
+    <div class="pipeline-step">
+        <div class="pipeline-icon" style="background: rgba(34,197,94,0.15); color: var(--green);">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        </div>
+        <div class="pipeline-label" data-i18n="overview.pipeline.select">Select</div>
+        <div class="pipeline-value">{{ beat_baseline }} <span data-i18n="overview.pipeline.alpha">alpha</span></div>
+    </div>
+</div>
 
-<h3>Sharpe Ratio Heatmap</h3>
+<!-- Hero Stats -->
+<div class="hero-grid">
+    <div class="hero-card hero-primary">
+        <div class="hero-card-top">
+            <span class="hero-card-label" data-i18n="overview.hero.explored">Strategies Explored</span>
+            <span class="hero-card-badge" data-i18n="overview.hero.aidriven">AI-Driven</span>
+        </div>
+        <div class="hero-card-number">{{ total_approaches }}</div>
+        <div class="hero-card-detail">
+            <span>{{ num_baselines }} <span data-i18n="overview.hero.baseline">baseline</span></span>
+            <span class="hero-card-sep">+</span>
+            <span style="color: var(--accent);">{{ num_researched }} <span data-i18n="overview.hero.aigenerated">AI-generated</span></span>
+        </div>
+    </div>
+    <div class="hero-card">
+        <div class="hero-card-top">
+            <span class="hero-card-label" data-i18n="overview.hero.beatrate">Beat Rate</span>
+        </div>
+        <div class="hero-card-number" style="color: {{ '#22c55e' if beat_rate > 30 else '#f59e0b' }};">{{ beat_rate|round(0)|int }}%</div>
+        <div class="hero-card-detail">{{ beat_baseline }}/{{ num_researched }} <span data-i18n="overview.hero.beatbaseline">beat baseline</span></div>
+    </div>
+    <div class="hero-card">
+        <div class="hero-card-top">
+            <span class="hero-card-label" data-i18n="overview.hero.bestsharpe">Best Avg Sharpe</span>
+        </div>
+        <div class="hero-card-number" style="color: var(--green);">{{ best_sharpe }}</div>
+        <div class="hero-card-detail">{{ best_name }}</div>
+    </div>
+    <div class="hero-card">
+        <div class="hero-card-top">
+            <span class="hero-card-label" data-i18n="overview.hero.vsbaseline">Sharpe vs Baseline</span>
+        </div>
+        <div class="hero-card-number" style="color: {{ '#22c55e' if improvement > 0 else '#ef4444' }};">{{ '+' if improvement > 0 }}{{ improvement }}</div>
+        <div class="hero-card-detail"><span data-i18n="overview.hero.vsbestbaseline">vs best baseline</span> {{ best_baseline_sharpe }}</div>
+    </div>
+</div>
+
+<!-- Discovered Strategies -->
+{% if discovered %}
+<div class="section-title">
+    <span data-i18n="overview.discovered.title">Discovered Strategies</span>
+    <span class="section-count">{{ discovered | length }} <span data-i18n="overview.discovered.beat">strategies beat baseline</span></span>
+</div>
+<div class="discovered-grid">
+    {% for d in discovered %}
+    <div class="discovered-card {{ 'discovered-best' if d.is_best }}">
+        {% if d.is_best %}<div class="discovered-crown" data-i18n="badge.best">BEST</div>{% endif %}
+        <div class="discovered-header">
+            <span class="discovered-name">{{ d.name }}</span>
+            <span class="discovered-sharpe" style="color: var(--green);">{{ d.avg_sharpe }}</span>
+        </div>
+        <div class="discovered-desc">{{ d.approach }}</div>
+        <div class="discovered-tags">
+            <span class="tag">{{ d.category }}</span>
+            {% for ind in d.indicators %}
+            <span class="indicator-tag-sm">{{ ind }}</span>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Tried Hypotheses + Next Hypotheses -->
+<div class="grid-2" style="margin-bottom: 24px;">
+    <div>
+        <div class="section-title" data-i18n="overview.tried.title">Tried Hypotheses</div>
+        <div class="hypotheses-list">
+            {% for h in tried_hypotheses %}
+            <div class="hypothesis-card {{ 'hypothesis-beat' if h.beat_baseline and h.status != 'baseline' }}">
+                <div class="hypothesis-header">
+                    <div class="hypothesis-id-name">
+                        <span class="hypothesis-id">#{{ "%03d"|format(h.id) }}</span>
+                        <span class="hypothesis-name">{{ h.name }}</span>
+                    </div>
+                    <div class="hypothesis-badges">
+                        {% if h.is_best %}<span class="badge" style="background: rgba(234,179,8,0.15); color: #eab308; font-size: 10px;" data-i18n="badge.best">BEST</span>{% endif %}
+                        {% if h.beat_baseline and h.status != 'baseline' %}<span class="badge badge-done" style="font-size: 10px;" data-i18n="badge.alpha">ALPHA</span>{% endif %}
+                        <span class="badge badge-{{ h.status }}">{{ 'Human' if h.status == 'baseline' else 'AI' }}</span>
+                    </div>
+                </div>
+                <div class="hypothesis-approach">{{ h.approach }}</div>
+                <div class="hypothesis-meta">
+                    <span class="tag">{{ h.category }}</span>
+                    <span class="hypothesis-sharpe" style="color: {{ '#22c55e' if h.avg_sharpe >= 0.5 else '#f59e0b' if h.avg_sharpe >= 0 else '#ef4444' }}">
+                        Sharpe {{ h.avg_sharpe }}
+                    </span>
+                    <span class="hypothesis-date">{{ h.date }}</span>
+                </div>
+                <div class="hypothesis-indicators">
+                    {% for ind in h.indicators %}
+                    <span class="indicator-tag-sm">{{ ind }}</span>
+                    {% endfor %}
+                </div>
+                {% if h.analysis and h.analysis != 'AI-generated strategy.' and h.analysis != 'Baseline strategy.' and h.analysis != 'AI-generated strategy from automated research cycle.' %}
+                <div class="hypothesis-analysis">{{ h.analysis }}</div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div>
+        <div class="section-title" data-i18n="overview.next.title">Next Hypotheses</div>
+        <div class="card" style="margin-bottom: 16px;">
+            <div class="card-title" data-i18n="overview.next.planned">Planned Experiments</div>
+            <ul class="info-list">
+                {% for step in next_steps %}
+                <li>{{ step }}</li>
+                {% endfor %}
+            </ul>
+            {% if not next_steps %}
+            <div class="empty-state" style="padding: 24px;"><p data-i18n="overview.next.empty">No next steps defined yet.</p></div>
+            {% endif %}
+        </div>
+
+        <div class="section-title" data-i18n="overview.directions.title">Research Directions</div>
+        <div class="card" style="margin-bottom: 16px;">
+            <ul class="info-list">
+                {% for dir in directions %}
+                <li>{{ dir }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <div class="section-title" data-i18n="overview.category.title">Category Performance</div>
+        <div class="card" style="margin-bottom: 16px;">
+            {% for cat, stats in category_stats.items() %}
+            <div class="category-row">
+                <div class="category-info">
+                    <span class="category-name">{{ cat }}</span>
+                    <span class="text-muted" style="font-size: 11px;">{{ stats.count }} <span data-i18n="overview.category.strategies">strategies</span></span>
+                </div>
+                <div class="category-bar-wrap">
+                    {% set bar_width = stats.avg_sharpe * 100 %}
+                    {% if bar_width > 100 %}{% set bar_width = 100 %}{% endif %}
+                    {% if bar_width < 5 %}{% set bar_width = 5 %}{% endif %}
+                    <div class="category-bar" style="width: {{ bar_width }}%; background: {{ '#22c55e' if stats.avg_sharpe >= 0.5 else '#f59e0b' if stats.avg_sharpe >= 0 else '#ef4444' }};"></div>
+                </div>
+                <span class="category-value" style="color: {{ '#22c55e' if stats.avg_sharpe >= 0.5 else '#f59e0b' if stats.avg_sharpe >= 0 else '#ef4444' }}">{{ stats.avg_sharpe }}</span>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="section-title" data-i18n="overview.indicators.title">Indicators Explored</div>
+        <div class="indicators-cloud">
+            {% for ind in all_indicators %}
+            <span class="indicator-tag">{{ ind }}</span>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Best per Symbol -->
+<div class="section-title" data-i18n="overview.bestmarket.title">Best Strategy per Market</div>
+<div class="table-wrap" style="margin-bottom: 24px;">
+    <table>
+        <thead>
+            <tr>
+                <th data-i18n="table.market">Market</th>
+                <th data-i18n="table.aiselected">AI-Selected Strategy</th>
+                <th data-i18n="table.sharpe">Sharpe</th>
+                <th data-i18n="table.return">Return</th>
+                <th data-i18n="table.mdd">MDD</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for sym, data in symbol_bests.items() %}
+            <tr>
+                <td style="color: var(--text); font-weight: 600;">{{ sym }}</td>
+                <td><span class="tag">{{ data.strategy }}</span></td>
+                <td style="color: {{ '#22c55e' if data.sharpe >= 0.5 else '#f59e0b' if data.sharpe >= 0 else '#ef4444' }}; font-weight: 600;">{{ data.sharpe }}</td>
+                <td style="color: {{ '#22c55e' if data.ret >= 0 else '#ef4444' }}">{{ data.ret }}%</td>
+                <td style="color: #ef4444;">{{ data.mdd }}%</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Heatmap -->
+<div class="section-title" data-i18n="overview.heatmap.title">Cross-Market Performance Matrix</div>
 <div id="heatmap-chart" class="chart-container"></div>
+
+<!-- Full Ranking Table -->
+<div class="section-title" data-i18n="overview.ranking.title">Full Strategy Ranking</div>
+<div class="table-wrap">
+    <table class="table-sticky">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th data-i18n="table.strategy">Strategy</th>
+                <th data-i18n="table.origin">Origin</th>
+                <th data-i18n="table.category">Category</th>
+                {% for sym in symbols %}
+                <th>{{ sym }}</th>
+                {% endfor %}
+                <th data-i18n="table.avg">Avg</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for a in approaches %}
+            {% if a.results %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td style="color: var(--text); font-weight: 600;">{{ a.name }}</td>
+                <td><span class="badge badge-{{ a.status }}" data-i18n="{{ 'badge.human' if a.status == 'baseline' else 'badge.ai' }}">{{ 'Human' if a.status == 'baseline' else 'AI' }}</span></td>
+                <td><span class="tag">{{ a.category }}</span></td>
+                {% set ns = namespace(total=0, count=0) %}
+                {% for sym in symbols %}
+                <td>
+                    {% set sr = a.results.get(sym, {}) %}
+                    {% set val = sr.get('sharpe_ratio', sr.get('sharpe', none)) %}
+                    {% if val is not none %}
+                        {% set ns.total = ns.total + val %}
+                        {% set ns.count = ns.count + 1 %}
+                        <span style="color: {{ '#22c55e' if val >= 0.5 else '#f59e0b' if val >= 0 else '#ef4444' }}">
+                            {{ "%.2f"|format(val) }}
+                        </span>
+                    {% else %}-{% endif %}
+                </td>
+                {% endfor %}
+                <td style="font-weight: 700; color: var(--text);">
+                    {% if ns.count > 0 %}
+                        {{ "%.2f"|format(ns.total / ns.count) }}
+                    {% else %}-{% endif %}
+                </td>
+            </tr>
+            {% endif %}
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
 {% endblock %}
 
 {% block scripts %}

@@ -38,12 +38,18 @@ def run_cycle(
         # Convert metrics to percentage-friendly format for journal
         all_results[symbol] = {
             "sharpe_ratio": metrics["sharpe_ratio"],
-            "total_return": metrics["total_return"] * 100,  # Convert to percentage
+            "sortino_ratio": metrics.get("sortino_ratio", 0.0),
+            "calmar_ratio": metrics.get("calmar_ratio", 0.0),
+            "alpha": metrics.get("alpha", 0.0) * 100,
+            "beta": metrics.get("beta", 0.0),
+            "total_return": metrics["total_return"] * 100,
             "cagr": metrics["cagr"] * 100,
             "max_drawdown": metrics["max_drawdown"] * 100,
+            "max_dd_duration_days": metrics.get("max_dd_duration_days", 0),
             "win_rate": metrics["win_rate"] * 100,
             "profit_factor": metrics["profit_factor"],
             "trade_count": metrics["trade_count"],
+            "benchmark_return": metrics.get("benchmark_return", 0.0) * 100,
         }
 
     return all_results

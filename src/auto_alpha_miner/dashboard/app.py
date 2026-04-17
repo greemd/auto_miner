@@ -18,9 +18,10 @@ app = FastAPI(title="Auto Alpha Miner Dashboard")
 app.mount("/static", StaticFiles(directory=str(_STATIC_DIR)), name="static")
 
 # Import and register routes
-from auto_alpha_miner.dashboard.routes import overview, strategy, compare, research  # noqa: E402
+from auto_alpha_miner.dashboard.routes import overview, strategy, compare, research, portfolio  # noqa: E402
 
 app.include_router(overview.router)
 app.include_router(strategy.router)
 app.include_router(compare.router)
+app.include_router(portfolio.router)
 app.include_router(research.router)

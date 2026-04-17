@@ -73,12 +73,24 @@ universes:
 # 자동 연구 루프 설정 (research-init 기본값)
 research:
   benchmark_symbols:
+    # US
     - SP500
+    - NASDAQ
+    - SPY
+    - QQQ
+    # Asia
     - KOSPI
     - NIKKEI
+    - HANGSENG
+    # Europe
     - FTSE
     - DAX
+    # Crypto
     - BTC
+    - ETH
+    # Commodities
+    - GOLD
+    - OIL
   start: "2010-01-01"
   end: "2024-12-31"
   capital: 100000

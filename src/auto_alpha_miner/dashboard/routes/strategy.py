@@ -46,3 +46,33 @@ def api_strategies():
 @router.get("/api/symbols")
 def api_symbols():
     return get_symbols()
+
+
+# --- Cache Management ---
+
+@router.get("/api/cache/info")
+def cache_info():
+    """Return info about cached data files."""
+    from auto_alpha_miner.data import _CACHE_DIR
+    if not _CACHE_DIR.exists():
+        return {"files": [], "total_size_mb": 0}
+    files = []
+    total = 0
+    for f in sorted(_CACHE_DIR.glob("*.parquet")):
+        size = f.stat().st_size
+        total += size
+        files.append({"name": f.name, "size_kb": round(size / 1024, 1)})
+    return {"files": files, "total_size_mb": round(total / 1024 / 1024, 2)}
+
+
+@router.post("/api/cache/clear")
+def cache_clear():
+    """Delete all cached data files."""
+    from auto_alpha_miner.data import _CACHE_DIR
+    if not _CACHE_DIR.exists():
+        return {"ok": True, "deleted": 0}
+    count = 0
+    for f in _CACHE_DIR.glob("*.parquet"):
+        f.unlink()
+        count += 1
+    return {"ok": True, "deleted": count}

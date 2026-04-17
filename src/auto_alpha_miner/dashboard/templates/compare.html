@@ -1,63 +1,73 @@
 {% extends "base.html" %}
 {% block title %}Compare — Auto Alpha Miner{% endblock %}
+{% block page_title %}<span data-i18n="compare.title">Strategy Comparison</span>{% endblock %}
 
 {% block content %}
-<h2>Strategy Comparison</h2>
-
-<div class="form-row">
-    <div style="flex:2;">
-        <label>Strategies (select multiple)</label>
-        <select id="strategies-select" multiple size="5">
-            {% for s in strategies %}
-            <option value="{{ s }}">{{ s }}</option>
-            {% endfor %}
-        </select>
-    </div>
-    <div>
-        <label for="compare-symbol">Symbol</label>
-        <select id="compare-symbol">
-            {% for s in symbols %}
-            <option value="{{ s }}" {% if s == 'SPY' %}selected{% endif %}>{{ s }}</option>
-            {% endfor %}
-        </select>
-    </div>
-    <div>
-        <label for="compare-start">Start</label>
-        <input type="date" id="compare-start" value="2020-01-01">
-    </div>
-    <div>
-        <label for="compare-end">End</label>
-        <input type="date" id="compare-end" value="2024-12-31">
-    </div>
-    <div>
-        <button id="compare-btn" onclick="runCompare()">Compare</button>
+<div class="card" style="margin-bottom: 24px;">
+    <div class="form-row">
+        <div class="form-group" style="flex: 2;">
+            <label data-i18n="compare.select">Strategies (select multiple)</label>
+            <select id="strategies-select" multiple size="5">
+                {% for s in strategies %}
+                <option value="{{ s }}">{{ s }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="compare-symbol" data-i18n="backtest.symbol">Symbol</label>
+            <select id="compare-symbol">
+                {% for s in symbols %}
+                <option value="{{ s }}" {% if s == 'SPY' %}selected{% endif %}>{{ s }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="compare-start" data-i18n="backtest.start">Start Date</label>
+            <input type="date" id="compare-start" value="2020-01-01">
+        </div>
+        <div class="form-group">
+            <label for="compare-end" data-i18n="backtest.end">End Date</label>
+            <input type="date" id="compare-end" value="2024-12-31">
+        </div>
+        <div class="form-group">
+            <label for="compare-capital" data-i18n="backtest.capital">Capital ($)</label>
+            <input type="number" id="compare-capital" value="100000" min="1000" step="10000">
+        </div>
+        <div class="form-group" style="flex: 0 0 auto;">
+            <label>&nbsp;</label>
+            <button id="compare-btn" class="btn btn-primary" onclick="runCompare()" data-i18n="compare.run">Compare</button>
+        </div>
     </div>
 </div>
 
 <div id="compare-results">
-    <p style="color: var(--pico-muted-color);">Select 2+ strategies and a symbol, then click "Compare".</p>
+    <div class="empty-state">
+        <p data-i18n="compare.placeholder">Select 2 or more strategies and a symbol, then click <strong>Compare</strong>.</p>
+    </div>
 </div>
 
-<div id="compare-chart" class="chart-container"></div>
+<div id="compare-chart" class="chart-container" style="display:none;"></div>
 
-<h3 id="compare-table-title" style="display:none;">Metrics Comparison</h3>
-<div id="compare-table"></div>
+<div id="compare-metrics-section" style="display:none;">
+    <div class="section-title" data-i18n="compare.metrics">Metrics Comparison</div>
+    <div id="compare-table"></div>
+</div>
 {% endblock %}
 
 {% block scripts %}
 <script>
 async function runCompare() {
     const btn = document.getElementById('compare-btn');
-    btn.setAttribute('aria-busy', 'true');
-    btn.textContent = 'Running...';
+    btn.classList.add('loading');
+    btn.textContent = t('compare.running') || 'Running...';
 
     const select = document.getElementById('strategies-select');
     const selected = Array.from(select.selectedOptions).map(o => o.value);
 
     if (selected.length < 2) {
-        document.getElementById('compare-results').innerHTML = '<p style="color:red;">Select at least 2 strategies.</p>';
-        btn.removeAttribute('aria-busy');
-        btn.textContent = 'Compare';
+        document.getElementById('compare-results').innerHTML = `<div class="error-msg">${t('compare.min2') || 'Please select at least 2 strategies.'}</div>`;
+        btn.classList.remove('loading');
+        btn.textContent = t('compare.run') || 'Compare';
         return;
     }
 
@@ -66,7 +76,7 @@ async function runCompare() {
         symbol: document.getElementById('compare-symbol').value,
         start: document.getElementById('compare-start').value,
         end: document.getElementById('compare-end').value,
-        capital: 100000,
+        capital: parseInt(document.getElementById('compare-capital').value) || 100000,
     };
 
     try {
@@ -78,32 +88,44 @@ async function runCompare() {
         const results = await resp.json();
 
         if (results.error) {
-            document.getElementById('compare-results').innerHTML = `<p style="color:red;">${results.error}</p>`;
+            document.getElementById('compare-results').innerHTML = `<div class="error-msg">${results.error}</div>`;
             return;
         }
 
+        document.getElementById('compare-chart').style.display = 'block';
         renderCompareChart('compare-chart', results);
 
-        // Build comparison table
         const metrics = ['total_return', 'cagr', 'max_drawdown', 'sharpe_ratio', 'win_rate', 'profit_factor', 'trade_count'];
-        const labels = ['Return (%)', 'CAGR (%)', 'MDD (%)', 'Sharpe', 'Win Rate (%)', 'Profit Factor', 'Trades'];
-        let html = '<table role="grid"><thead><tr><th>Metric</th>';
+        const labelKeys = ['table.totalreturn', 'table.cagr_pct', 'table.mdd_pct', 'table.sharpe_ratio', 'table.winrate_pct', 'table.profitfactor', 'table.trades'];
+        const defaultLabels = ['Total Return (%)', 'CAGR (%)', 'Max Drawdown (%)', 'Sharpe Ratio', 'Win Rate (%)', 'Profit Factor', 'Trades'];
+
+        let html = `<div class="table-wrap"><table><thead><tr><th>${t('table.metric') || 'Metric'}</th>`;
         for (const r of results) html += `<th>${r.strategy}</th>`;
         html += '</tr></thead><tbody>';
+
         for (let i = 0; i < metrics.length; i++) {
-            html += `<tr><td>${labels[i]}</td>`;
-            for (const r of results) html += `<td>${r.metrics[metrics[i]]}</td>`;
+            const label = t(labelKeys[i]) || defaultLabels[i];
+            html += `<tr><td style="color: var(--text); font-weight: 500;">${label}</td>`;
+            const vals = results.map(r => r.metrics[metrics[i]]);
+            const best = metrics[i] === 'max_drawdown' ? Math.min(...vals) : Math.max(...vals);
+
+            for (const r of results) {
+                const v = r.metrics[metrics[i]];
+                const isBest = v === best && results.length > 1;
+                html += `<td style="${isBest ? 'color: #22c55e; font-weight: 600;' : ''}">${v}</td>`;
+            }
             html += '</tr>';
         }
-        html += '</tbody></table>';
+        html += '</tbody></table></div>';
+
         document.getElementById('compare-table').innerHTML = html;
-        document.getElementById('compare-table-title').style.display = 'block';
+        document.getElementById('compare-metrics-section').style.display = 'block';
         document.getElementById('compare-results').innerHTML = '';
     } catch (e) {
-        document.getElementById('compare-results').innerHTML = `<p style="color:red;">Error: ${e.message}</p>`;
+        document.getElementById('compare-results').innerHTML = `<div class="error-msg">${t('common.error') || 'Error:'} ${e.message}</div>`;
     } finally {
-        btn.removeAttribute('aria-busy');
-        btn.textContent = 'Compare';
+        btn.classList.remove('loading');
+        btn.textContent = t('compare.run') || 'Compare';
     }
 }
 </script>

@@ -5,6 +5,11 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
+export PATH="$HOME/.local/bin:$HOME/.cargo/bin:/usr/local/bin:$PATH"
+
+exec 9>/tmp/auto_miner_research_cycle.lock
+flock -n 9 || { echo "research_cycle already running — exiting"; exit 0; }
+
 JOURNAL="research/journal.md"
 
 if [ ! -f "$JOURNAL" ]; then

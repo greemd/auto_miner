@@ -105,9 +105,19 @@ def backtest_result_to_dict(result: BacktestResult, metrics: dict) -> dict:
     cummax = ec.cummax()
     drawdown = (ec - cummax) / cummax
 
+    # Benchmark data
+    bench = result.benchmark_equity
+    benchmark_data = None
+    if bench is not None and len(bench) > 0:
+        benchmark_data = {
+            "dates": [d.isoformat() for d in bench.index],
+            "values": bench.tolist(),
+        }
+
     return {
         "symbol": result.symbol,
         "strategy": result.strategy_name,
+        "benchmark": benchmark_data,
         "equity_curve": {
             "dates": [d.isoformat() for d in ec.index],
             "values": ec.tolist(),
@@ -120,10 +130,18 @@ def backtest_result_to_dict(result: BacktestResult, metrics: dict) -> dict:
             "total_return": round(metrics["total_return"] * 100, 2),
             "cagr": round(metrics["cagr"] * 100, 2),
             "max_drawdown": round(metrics["max_drawdown"] * 100, 2),
+            "max_dd_duration_days": int(metrics.get("max_dd_duration_days", 0)),
             "sharpe_ratio": round(metrics["sharpe_ratio"], 2),
+            "sortino_ratio": round(metrics.get("sortino_ratio", 0), 2),
+            "calmar_ratio": round(metrics.get("calmar_ratio", 0), 2),
+            "alpha": round(metrics.get("alpha", 0) * 100, 2),
+            "beta": round(metrics.get("beta", 0), 2),
             "win_rate": round(metrics["win_rate"] * 100, 1),
             "profit_factor": round(metrics["profit_factor"], 2),
             "trade_count": int(metrics["trade_count"]),
+            "total_commission": round(metrics.get("total_commission", 0), 2),
+            "benchmark_return": round(metrics.get("benchmark_return", 0) * 100, 2),
+            "benchmark_sharpe": round(metrics.get("benchmark_sharpe", 0), 2),
         },
         "trades": [
             {
