@@ -1,3 +1,4 @@
+from celery import current_task
 from auto_alpha_miner.celery_app import app
 from auto_alpha_miner.research.journal import create_default_journal
 from auto_alpha_miner.research.runner import run_cycle
@@ -7,6 +8,7 @@ from pathlib import Path
 
 @app.task
 def research_init_task(journal_path_str: str) -> None:
+    current_task.update_state(state='PROGRESS', meta={'current': 0, 'total': 1, 'status': 'Initializing research journal...'})
     journal_path = Path(journal_path_str)
     if journal_path.exists():
         print(f"Journal already exists at {journal_path}")
@@ -22,7 +24,10 @@ def research_init_task(journal_path_str: str) -> None:
     }
 
     approach_id = 1
-    for name in STRATEGY_REGISTRY:
+    total_strategies = len(STRATEGY_REGISTRY)
+    for i, name in enumerate(STRATEGY_REGISTRY):
+        current_task.update_state(state='PROGRESS', meta={'current': i + 1, 'total': total_strategies, 'status': f'Running baseline backtest for {name}...'})
+
         print(f"  Running {name}...")
         try:
             results = run_cycle(name, j.config.benchmark_symbols, j.config.start, j.config.end, j.config.capital)
@@ -52,6 +57,8 @@ def research_init_task(journal_path_str: str) -> None:
 
 @app.task
 def research_run_task(journal_path_str: str, strategy_name: str) -> None:
+    current_task.update_state(state='PROGRESS', meta={'current': 0, 'total': 1, 'status': f'Starting research run for {strategy_name}...'})
+
     from auto_alpha_miner.research.journal import Journal
     from auto_alpha_miner.research.runner import run_research_cycle
 
@@ -70,7 +77,9 @@ def research_run_task(journal_path_str: str, strategy_name: str) -> None:
         print(f"Available: {', '.join(STRATEGY_REGISTRY.keys())}")
         return
 
-    print(f"Running {strategy_name} on {', '.join(j.config.benchmark_symbols)}...")
+    print(f"Running {strategy_name} on {", ".join(j.config.benchmark_symbols)}...")
+    current_task.update_state(state='PROGRESS', meta={'current': 1, 'total': 1, 'status': f'Executing research cycle for {strategy_name}...'})
+
     results = run_research_cycle(journal_path, strategy_name)
 
     print("\n=== RESEARCH RESULT ===")

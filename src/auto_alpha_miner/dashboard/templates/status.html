@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<h1 class="text-2xl font-bold mb-4">Real-time Status</h1>
+<div id="status-updates" class="bg-gray-800 p-4 rounded-lg shadow-md">
+    <p class="text-gray-400">Loading real-time status updates...</p>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const statusDiv = document.getElementById("status-updates");
+        const taskId = "{{ request.query_params.get(\'task_id\', \'no_task_id\') }}"; // Get task_id from query parameter
+
+        if (taskId === "no_task_id") {
+            statusDiv.innerHTML = `<p class="text-gray-400">No task ID provided. Please start a research task.</p>`;
+            return;
+        }
+
+        async function fetchTaskStatus() {
+            try {
+                const response = await fetch(`/api/task-status/${taskId}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                
+                let statusHtml = `<p class="text-gray-400">Task ID: ${taskId}</p>`;
+                statusHtml += `<p class="text-gray-400">State: ${data.state}</p>`;
+                statusHtml += `<p class="text-gray-400">Status: ${data.status}</p>`;
+
+                if (data.state === "PROGRESS" && data.total > 0) {
+                    const progress = (data.current / data.total) * 100;
+                    statusHtml += `<p class="text-gray-400">Progress: ${progress.toFixed(2)}% (${data.current}/${data.total})</p>`;
+                } else if (data.state === "SUCCESS") {
+                    statusHtml += `<p class="text-green-400">Task Completed Successfully!</p>`;
+                    if (data.result) {
+                        statusHtml += `<pre class="bg-gray-700 p-2 rounded mt-2">${JSON.stringify(data.result, null, 2)}</pre>`;
+                    }
+                } else if (data.state === "FAILURE") {
+                    statusHtml += `<p class="text-red-400">Task Failed!</p>`;
+                    if (data.result) {
+                        statusHtml += `<pre class="bg-gray-700 p-2 rounded mt-2">${JSON.stringify(data.result, null, 2)}</pre>`;
+                    }
+                }
+
+                statusDiv.innerHTML = statusHtml;
+
+            } catch (error) {
+                console.error("Error fetching task status:", error);
+                statusDiv.innerHTML = `<p class="text-red-400">Error fetching status: ${error.message}</p>`;
+            }
+        }
+
+        fetchTaskStatus(); // Fetch immediately on load
+        setInterval(fetchTaskStatus, 3000); // Poll every 3 seconds
+    });
+</script>
+{% endblock %}
