@@ -46,7 +46,6 @@ class RunResearchRequest(BaseModel):
 def research_page(request: Request):
     journal = get_journal_data()
     # Load all strategy modules
-    _ensure_strategies_loaded()
     strategies = list(STRATEGY_REGISTRY.keys())
     # Find which strategies are already in journal
     tested = {a["name"] for a in journal["approaches"]}
@@ -121,22 +120,11 @@ def delete_direction(req: DeleteItemRequest):
 
 # --- Run Research ---
 
-def _ensure_strategies_loaded():
-    """Make sure all strategy modules are imported."""
-    import auto_alpha_miner.strategy as strat_pkg
-    strat_dir = Path(strat_pkg.__file__).parent
-    for f in strat_dir.glob("*.py"):
-        if f.name.startswith("_"):
-            continue
-        module_name = f"auto_alpha_miner.strategy.{f.stem}"
-        if module_name not in importlib.import_module("sys").modules:
-            importlib.import_module(module_name)
 
 
 @router.post("/api/research/run")
 def run_research(req: RunResearchRequest):
     """Run a strategy across all benchmark symbols and save results to journal."""
-    _ensure_strategies_loaded()
 
     strategy_name = req.strategy
     if strategy_name not in STRATEGY_REGISTRY:
@@ -283,7 +271,6 @@ def ai_cycle_status():
 @router.get("/api/research/strategies")
 def get_available_strategies():
     """Return list of registered strategies and their test status."""
-    _ensure_strategies_loaded()
     journal = Journal(JOURNAL_PATH)
     tested = {a.name for a in journal.tried_approaches}
 
