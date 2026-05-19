@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<h1 class="text-2xl font-bold mb-4">Real-time Status</h1>
+<div id="status-updates" class="bg-gray-800 p-4 rounded-lg shadow-md">
+    <p class="text-gray-400">Loading real-time status updates...</p>
+</div>
+
+<script>
+    // Placeholder for real-time updates (e.g., using WebSockets or polling)
+    document.addEventListener('DOMContentLoaded', function() {
+        const statusDiv = document.getElementById('status-updates');
+        // Simulate fetching updates
+        setInterval(() => {
+            const now = new Date().toLocaleTimeString();
+            statusDiv.innerHTML = `<p class="text-gray-400">Last updated: ${now}</p><p class="text-green-400">AI Research Loop: Running...</p><p class="text-yellow-400">Data Collection: In progress...</p>`;
+        }, 5000);
+    });
+</script>
+{% endblock %}
