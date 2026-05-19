@@ -93,10 +93,10 @@ function renderDrawdownChart(containerId, data) {
     Plotly.newPlot(containerId, traces, layout, plotConfig);
 }
 
-function renderCompareChart(containerId, results) {
+function renderCompareChart(containerId, results, chartType = 'equity') {
     const traces = results.map((r, i) => ({
-        x: r.equity_curve.dates,
-        y: r.equity_curve.values,
+        x: r[chartType].dates,
+        y: chartType === 'drawdown' ? r[chartType].values.map(v => v * 100) : r[chartType].values,
         type: 'scatter',
         mode: 'lines',
         name: r.strategy,
@@ -106,7 +106,7 @@ function renderCompareChart(containerId, results) {
     const layout = {
         ...darkLayout,
         title: { text: `Strategy Comparison | ${results[0]?.symbol || ''}`, font: { size: 14, color: '#e4e6f0' } },
-        yaxis: { ...darkLayout.yaxis, title: { text: 'Equity ($)', font: { size: 11 } } },
+        yaxis: { ...darkLayout.yaxis, title: { text: chartType === 'drawdown' ? 'Drawdown (%)' : 'Equity ($)', font: { size: 11 } }, ticksuffix: chartType === 'drawdown' ? '%' : '' },
     };
 
     Plotly.newPlot(containerId, traces, layout, plotConfig);

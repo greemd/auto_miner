@@ -46,6 +46,19 @@
     </div>
 </div>
 
+<div class="form-group" style="margin-bottom: 16px;">
+    <label data-i18n="compare.chart_type">Chart Type</label>
+    <div class="flex space-x-4">
+        <label class="inline-flex items-center">
+            <input type="radio" name="chartType" value="equity" class="form-radio" checked>
+            <span class="ml-2" data-i18n="compare.equity_curve">Equity Curve</span>
+        </label>
+        <label class="inline-flex items-center">
+            <input type="radio" name="chartType" value="drawdown" class="form-radio">
+            <span class="ml-2" data-i18n="compare.drawdown_curve">Drawdown Curve</span>
+        </label>
+    </div>
+</div>
 <div id="compare-chart" class="chart-container" style="display:none;"></div>
 
 <div id="compare-metrics-section" style="display:none;">
@@ -93,7 +106,16 @@ async function runCompare() {
         }
 
         document.getElementById('compare-chart').style.display = 'block';
-        renderCompareChart('compare-chart', results);
+        const chartType = document.querySelector(\'input[name="chartType"]:checked\').value;
+        renderCompareChart(\'compare-chart\', results, chartType);
+
+        // Add event listeners for radio buttons to re-render chart
+        document.querySelectorAll(\'input[name="chartType"]\').forEach(radio => {
+            radio.addEventListener(\'change\', () => {
+                const newChartType = document.querySelector(\'input[name="chartType"]:checked\').value;
+                renderCompareChart(\'compare-chart\', results, newChartType);
+            });
+        });
 
         const metrics = ['total_return', 'cagr', 'max_drawdown', 'sharpe_ratio', 'win_rate', 'profit_factor', 'trade_count'];
         const labelKeys = ['table.totalreturn', 'table.cagr_pct', 'table.mdd_pct', 'table.sharpe_ratio', 'table.winrate_pct', 'table.profitfactor', 'table.trades'];
