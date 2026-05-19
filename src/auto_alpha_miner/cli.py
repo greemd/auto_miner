@@ -128,15 +128,20 @@ def run_portfolio(
 
     # Fetch data for all symbols
     data = {}
+    failed_symbols = []
     for sym in symbols:
         typer.echo(f"Fetching {sym} data...")
         try:
             data[sym] = collector.fetch(sym, start, end)
         except ValueError as e:
-            typer.echo(f"  Warning: {e} — skipping")
+            typer.echo(f"  Warning: Failed to fetch data for {sym} — {e} — skipping")
+            failed_symbols.append(sym)
+
+    if failed_symbols:
+        typer.echo(f"\nWarning: Data fetching failed for the following symbols: {", ".join(failed_symbols)}")
 
     if not data:
-        typer.echo("No data fetched. Exiting.")
+        typer.echo("No data fetched for any symbol. Exiting.")
         raise typer.Exit(1)
 
     if rebalance and rebalance not in ("W", "M", "Q"):
