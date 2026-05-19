@@ -34,13 +34,13 @@ def run(
     save_chart: Optional[str] = typer.Option(None, help="Save chart to file path"),
 ) -> None:
     """Run a backtest for a single strategy on a symbol."""
-    from auto_alpha_miner.config import STRATEGY_REGISTRY
+    from auto_alpha_miner.config import STRATEGY_REGISTRY, settings
     from auto_alpha_miner.data import CachedCollector, YFinanceCollector
     from auto_alpha_miner.backtest.engine import BacktestEngine
     from auto_alpha_miner.evaluation.metrics import evaluate
     from auto_alpha_miner.evaluation.report import print_report, plot_report
 
-    _load_strategies()
+
 
     if strategy not in STRATEGY_REGISTRY:
         typer.echo(f"Unknown strategy: {strategy}")
@@ -71,13 +71,13 @@ def run_all(
     capital: float = typer.Option(100_000.0, help="Initial capital"),
 ) -> None:
     """Run all registered strategies on a symbol and compare."""
-    from auto_alpha_miner.config import STRATEGY_REGISTRY
+    from auto_alpha_miner.config import STRATEGY_REGISTRY, settings
     from auto_alpha_miner.data import CachedCollector, YFinanceCollector
     from auto_alpha_miner.backtest.engine import BacktestEngine
     from auto_alpha_miner.evaluation.metrics import evaluate
     from auto_alpha_miner.evaluation.report import print_report
 
-    _load_strategies()
+
 
     collector = CachedCollector(YFinanceCollector())
     typer.echo(f"Fetching {symbol} data ({start} ~ {end})...")
@@ -104,14 +104,14 @@ def run_portfolio(
     save_chart: Optional[str] = typer.Option(None, help="Save chart to file path"),
 ) -> None:
     """Run a strategy across multiple symbols with equal-weight portfolio allocation."""
-    from auto_alpha_miner.config import STRATEGY_REGISTRY, UNIVERSES
+    from auto_alpha_miner.config import STRATEGY_REGISTRY, settings, UNIVERSES
     from auto_alpha_miner.data import CachedCollector, YFinanceCollector
     from auto_alpha_miner.backtest.allocator import EqualWeightAllocator
     from auto_alpha_miner.backtest.multi_engine import MultiSymbolEngine
     from auto_alpha_miner.evaluation.metrics import evaluate_portfolio
     from auto_alpha_miner.evaluation.report import print_portfolio_report, plot_portfolio_report
 
-    _load_strategies()
+
 
     if universe not in UNIVERSES:
         typer.echo(f"Unknown universe: {universe}")
@@ -164,8 +164,8 @@ def run_portfolio(
 @app.command("list-strategies")
 def list_strategies() -> None:
     """List all available strategies."""
-    _load_strategies()
-    from auto_alpha_miner.config import STRATEGY_REGISTRY
+
+    from auto_alpha_miner.config import STRATEGY_REGISTRY, settings
 
     typer.echo("Available strategies:")
     for name, cls in STRATEGY_REGISTRY.items():
@@ -202,55 +202,17 @@ def research_init(
     from pathlib import Path
     from datetime import date
 
-    from auto_alpha_miner.config import STRATEGY_REGISTRY
-    from auto_alpha_miner.research.journal import Journal, TriedApproach, create_default_journal
-    from auto_alpha_miner.research.runner import run_cycle
-
-    _load_strategies()
+    from auto_alpha_miner.config import STRATEGY_REGISTRY, settings
+    from auto_alpha_miner.tasks import research_init_task
 
     journal_path = Path(journal)
     if journal_path.exists():
         typer.echo(f"Journal already exists at {journal_path}")
         raise typer.Exit(1)
 
-    j = create_default_journal(journal_path)
-    typer.echo("Running baseline backtests on existing strategies...")
-
-    # Map existing strategies to metadata
-    strategy_meta = {
-        "turtle": ("trend-following", ["Donchian"], {"entry_period": "20", "exit_period": "10"}),
-        "rsi": ("mean-reversion", ["RSI"], {"period": "14", "oversold": "30", "overbought": "70"}),
-        "ma_cross": ("trend-following", ["SMA"], {"fast": "50", "slow": "200"}),
-    }
-
-    approach_id = 1
-    for name in STRATEGY_REGISTRY:
-        typer.echo(f"  Running {name}...")
-        try:
-            results = run_cycle(name, j.config.benchmark_symbols, j.config.start, j.config.end, j.config.capital)
-        except Exception as e:
-            typer.echo(f"  Warning: {name} failed — {e}")
-            continue
-
-        category, indicators, params = strategy_meta.get(name, ("other", [name], {}))
-        approach = TriedApproach(
-            id=approach_id,
-            name=f"baseline_{name}",
-            date=str(date.today()),
-            approach=f"Baseline: {STRATEGY_REGISTRY[name].__doc__ or name}",
-            category=category,
-            indicators=indicators,
-            parameters=params,
-            results=results,
-            analysis="Baseline strategy for comparison.",
-            status="baseline",
-        )
-        j.add_result(approach)
-        approach_id += 1
-
-    j.update_best_results()
-    j.save()
-    typer.echo(f"\nJournal created at {journal_path} with {len(j.tried_approaches)} baseline strategies.")
+    typer.echo("Initializing research journal and running baseline backtests in background...")
+    research_init_task.delay(str(journal_path))
+    typer.echo("Research initialization task dispatched. Check Celery worker logs for progress.")
 
 
 @app.command("research-run")
@@ -261,38 +223,17 @@ def research_run(
     """Run a strategy backtest and output structured results."""
     from pathlib import Path
 
-    from auto_alpha_miner.config import STRATEGY_REGISTRY
-    from auto_alpha_miner.research.journal import Journal
-    from auto_alpha_miner.research.runner import run_research_cycle
-
-    _load_strategies()
+    from auto_alpha_miner.config import STRATEGY_REGISTRY, settings
+    from auto_alpha_miner.tasks import research_run_task
 
     journal_path = Path(journal)
     if not journal_path.exists():
         typer.echo(f"Journal not found: {journal_path}. Run 'research-init' first.")
         raise typer.Exit(1)
 
-    j = Journal(journal_path)
-    if j.has_strategy(strategy):
-        typer.echo(f"Strategy '{strategy}' already exists in journal. Use a different name.")
-        raise typer.Exit(1)
-
-    if strategy not in STRATEGY_REGISTRY:
-        typer.echo(f"Strategy '{strategy}' not found in registry.")
-        typer.echo(f"Available: {', '.join(STRATEGY_REGISTRY.keys())}")
-        raise typer.Exit(1)
-
-    typer.echo(f"Running {strategy} on {', '.join(j.config.benchmark_symbols)}...")
-    results = run_research_cycle(journal_path, strategy)
-
-    # Output structured results
-    typer.echo("\n=== RESEARCH RESULT ===")
-    typer.echo(f"strategy: {strategy}")
-    for symbol, metrics in results.items():
-        typer.echo(f"--- {symbol} ---")
-        for k, v in metrics.items():
-            typer.echo(f"{k}: {v}")
-    typer.echo("=== END RESULT ===")
+    typer.echo(f"Dispatching research run task for {strategy}...")
+    research_run_task.delay(str(journal_path), strategy)
+    typer.echo("Research run task dispatched. Check Celery worker logs for progress and results.")
 
 
 @app.command("research-validate")
@@ -303,7 +244,7 @@ def research_validate(
     from pathlib import Path
     from auto_alpha_miner.research.validator import validate_strategy_file
 
-    _load_strategies()
+
 
     file_path = Path(file)
     valid, error = validate_strategy_file(file_path)
@@ -365,7 +306,7 @@ def dashboard(
     """Start the local web dashboard."""
     import uvicorn
 
-    _load_strategies()
+
     typer.echo(f"Starting dashboard at http://{host}:{port}")
     uvicorn.run(
         "auto_alpha_miner.dashboard.app:app",
