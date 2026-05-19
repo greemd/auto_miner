@@ -40,6 +40,12 @@ def run(
     from auto_alpha_miner.evaluation.metrics import evaluate
     from auto_alpha_miner.evaluation.report import print_report, plot_report
 
+    def _get_default_collector() -> CachedCollector:
+        return CachedCollector(YFinanceCollector())
+
+    def _get_default_engine(capital: float) -> BacktestEngine:
+        return BacktestEngine(initial_capital=capital)
+
     _load_strategies()
 
     if strategy not in STRATEGY_REGISTRY:
@@ -47,15 +53,15 @@ def run(
         typer.echo(f"Available: {', '.join(STRATEGY_REGISTRY.keys())}")
         raise typer.Exit(1)
 
-    collector = CachedCollector(YFinanceCollector())
+    collector_instance = _get_default_collector()
     typer.echo(f"Fetching {symbol} data ({start} ~ {end})...")
-    df = collector.fetch(symbol, start, end)
+    df = collector_instance.fetch(symbol, start, end)
 
     strat = STRATEGY_REGISTRY[strategy]()
-    engine = BacktestEngine(initial_capital=capital)
+    engine_instance = _get_default_engine(capital)
 
     typer.echo(f"Running {strategy} strategy...")
-    result = engine.run(df, strat, symbol)
+    result = engine_instance.run(df, strat, symbol)
     metrics = evaluate(result)
     print_report(result, metrics)
 
@@ -77,17 +83,23 @@ def run_all(
     from auto_alpha_miner.evaluation.metrics import evaluate
     from auto_alpha_miner.evaluation.report import print_report
 
+    def _get_default_collector() -> CachedCollector:
+        return CachedCollector(YFinanceCollector())
+
+    def _get_default_engine(capital: float) -> BacktestEngine:
+        return BacktestEngine(initial_capital=capital)
+
     _load_strategies()
 
-    collector = CachedCollector(YFinanceCollector())
+    collector_instance = _get_default_collector()
     typer.echo(f"Fetching {symbol} data ({start} ~ {end})...")
-    df = collector.fetch(symbol, start, end)
+    df = collector_instance.fetch(symbol, start, end)
 
-    engine = BacktestEngine(initial_capital=capital)
+    engine_instance = _get_default_engine(capital)
 
     for name, strat_cls in STRATEGY_REGISTRY.items():
         strat = strat_cls()
-        result = engine.run(df, strat, symbol)
+        result = engine_instance.run(df, strat, symbol)
         metrics = evaluate(result)
         print_report(result, metrics)
 
@@ -111,6 +123,12 @@ def run_portfolio(
     from auto_alpha_miner.evaluation.metrics import evaluate_portfolio
     from auto_alpha_miner.evaluation.report import print_portfolio_report, plot_portfolio_report
 
+    def _get_default_collector() -> CachedCollector:
+        return CachedCollector(YFinanceCollector())
+
+    def _get_default_multi_engine(capital: float) -> MultiSymbolEngine:
+        return MultiSymbolEngine(initial_capital=capital)
+
     _load_strategies()
 
     if universe not in UNIVERSES:
@@ -124,14 +142,14 @@ def run_portfolio(
         raise typer.Exit(1)
 
     symbols = UNIVERSES[universe]
-    collector = CachedCollector(YFinanceCollector())
+    collector_instance = _get_default_collector()
 
     # Fetch data for all symbols
     data = {}
     for sym in symbols:
         typer.echo(f"Fetching {sym} data...")
         try:
-            data[sym] = collector.fetch(sym, start, end)
+            data[sym] = collector_instance.fetch(sym, start, end)
         except ValueError as e:
             typer.echo(f"  Warning: {e} — skipping")
 
@@ -144,11 +162,11 @@ def run_portfolio(
         raise typer.Exit(1)
 
     allocator = EqualWeightAllocator()
-    engine = MultiSymbolEngine(initial_capital=capital)
+    engine_instance = _get_default_multi_engine(capital)
 
     rebal_label = {"W": "weekly", "M": "monthly", "Q": "quarterly"}.get(rebalance, "fixed") if rebalance else "fixed"
     typer.echo(f"\nRunning {strategy} on {len(data)} symbols with equal allocation ({rebal_label} rebalancing)...")
-    result = engine.run(data, STRATEGY_REGISTRY[strategy], allocator, rebalance=rebalance)
+    result = engine_instance.run(data, STRATEGY_REGISTRY[strategy], allocator, rebalance=rebalance)
     metrics = evaluate_portfolio(result)
     print_portfolio_report(result, metrics)
 
