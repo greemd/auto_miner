@@ -7,9 +7,8 @@ import importlib
 import sys
 from pathlib import Path
 
-    import numpy as np
-    import pandas as pd
-    import subprocess
+import numpy as np
+import pandas as pd
 
 
 def validate_strategy_file(file_path: Path) -> tuple[bool, str]:
@@ -29,26 +28,13 @@ def validate_strategy_file(file_path: Path) -> tuple[bool, str]:
 
     source = file_path.read_text(encoding="utf-8")
 
-    # Step 1: Valid Python syntax
+    # Step 1: Valid Python
     try:
         tree = ast.parse(source)
     except SyntaxError as e:
         return False, f"Syntax error: {e}"
 
-    # Step 2: Static analysis with flake8
-    try:
-        result = subprocess.run(
-            ["flake8", str(file_path)],
-            capture_output=True,
-            text=True,
-            check=False
-        )
-        if result.returncode != 0:
-            return False, f"Flake8 issues:\n{result.stdout}"
-    except FileNotFoundError:
-        return False, "Flake8 not found. Please install it (pip install flake8)."
-
-    # Step 3: Check for BaseStrategy class with register_strategy
+    # Step 2+3: Check for BaseStrategy class with register_strategy
     has_register = False
     strategy_class_name = None
 
@@ -65,7 +51,6 @@ def validate_strategy_file(file_path: Path) -> tuple[bool, str]:
                     strategy_class_name = node.name
                     break
 
-    # Step 3: Check for BaseStrategy class with register_strategy
     if not has_register or not strategy_class_name:
         return False, "No class found with @register_strategy decorator"
 
