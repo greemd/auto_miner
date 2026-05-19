@@ -12,7 +12,14 @@ from auto_alpha_miner.config import SYMBOL_MAP
 _CACHE_DIR = Path(__file__).resolve().parents[2] / ".data_cache"
 
 
-class YFinanceCollector:
+from abc import ABC, abstractmethod
+
+class Collector(ABC):
+    @abstractmethod
+    def fetch(self, symbol: str, start: str, end: str) -> pd.DataFrame:
+        pass
+
+class YFinanceCollector(Collector):
     """Fetch OHLCV data from Yahoo Finance."""
 
     def fetch(self, symbol: str, start: str, end: str) -> pd.DataFrame:
@@ -25,6 +32,14 @@ class YFinanceCollector:
             df.columns = df.columns.get_level_values(0)
         return df
 
+
+class QuandlCollector(Collector):
+    """Placeholder for fetching OHLCV data from Quandl."""
+    def fetch(self, symbol: str, start: str, end: str) -> pd.DataFrame:
+        # Implement Quandl data fetching logic here
+        print(f"Fetching {symbol} data from Quandl (placeholder)...")
+        # For now, return an empty DataFrame or raise NotImplementedError
+        raise NotImplementedError("Quandl data fetching not yet implemented.")
 
 class CachedCollector:
     """Wraps a collector with parquet file caching."""
