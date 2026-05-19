@@ -3,13 +3,24 @@
 from __future__ import annotations
 
 from typing import Optional
-from pathlib import Path
-
 
 import typer
 
 app = typer.Typer(help="Auto Alpha Miner — backtest trading strategies on market data.")
 
+
+def _load_strategies() -> None:
+    """Auto-import all strategy modules from the strategy package directory."""
+    import importlib
+    from pathlib import Path
+    import auto_alpha_miner.strategy as strat_pkg
+
+    strat_dir = Path(strat_pkg.__file__).parent
+    for f in strat_dir.glob("*.py"):
+        if f.name.startswith("_"):
+            continue
+        module_name = f"auto_alpha_miner.strategy.{f.stem}"
+        importlib.import_module(module_name)
 
 
 @app.command()
@@ -29,6 +40,7 @@ def run(
     from auto_alpha_miner.evaluation.metrics import evaluate
     from auto_alpha_miner.evaluation.report import print_report, plot_report
 
+    _load_strategies()
 
     if strategy not in STRATEGY_REGISTRY:
         typer.echo(f"Unknown strategy: {strategy}")
@@ -65,6 +77,7 @@ def run_all(
     from auto_alpha_miner.evaluation.metrics import evaluate
     from auto_alpha_miner.evaluation.report import print_report
 
+    _load_strategies()
 
     collector = CachedCollector(YFinanceCollector())
     typer.echo(f"Fetching {symbol} data ({start} ~ {end})...")
@@ -98,6 +111,7 @@ def run_portfolio(
     from auto_alpha_miner.evaluation.metrics import evaluate_portfolio
     from auto_alpha_miner.evaluation.report import print_portfolio_report, plot_portfolio_report
 
+    _load_strategies()
 
     if universe not in UNIVERSES:
         typer.echo(f"Unknown universe: {universe}")
@@ -145,6 +159,7 @@ def run_portfolio(
 @app.command("list-strategies")
 def list_strategies() -> None:
     """List all available strategies."""
+    _load_strategies()
     from auto_alpha_miner.config import STRATEGY_REGISTRY
 
     typer.echo("Available strategies:")
@@ -186,6 +201,7 @@ def research_init(
     from auto_alpha_miner.research.journal import Journal, TriedApproach, create_default_journal
     from auto_alpha_miner.research.runner import run_cycle
 
+    _load_strategies()
 
     journal_path = Path(journal)
     if journal_path.exists():
@@ -244,6 +260,7 @@ def research_run(
     from auto_alpha_miner.research.journal import Journal
     from auto_alpha_miner.research.runner import run_research_cycle
 
+    _load_strategies()
 
     journal_path = Path(journal)
     if not journal_path.exists():
@@ -281,6 +298,7 @@ def research_validate(
     from pathlib import Path
     from auto_alpha_miner.research.validator import validate_strategy_file
 
+    _load_strategies()
 
     file_path = Path(file)
     valid, error = validate_strategy_file(file_path)
@@ -342,6 +360,7 @@ def dashboard(
     """Start the local web dashboard."""
     import uvicorn
 
+    _load_strategies()
     typer.echo(f"Starting dashboard at http://{host}:{port}")
     uvicorn.run(
         "auto_alpha_miner.dashboard.app:app",

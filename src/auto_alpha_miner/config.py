@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import TYPE_CHECKING
-import importlib
 
 import yaml
 
@@ -32,22 +31,12 @@ RESEARCH_CONFIG: dict = _config.get("research", {})
 
 STRATEGY_REGISTRY: dict[str, type[BaseStrategy]] = {}
 
-def _load_strategies() -> None:
-    """Auto-import all strategy modules from the strategy package directory."""
-    import importlib
-    import auto_alpha_miner.strategy as strat_pkg
-
-    strat_dir = Path(strat_pkg.__file__).parent
-    for f in strat_dir.glob("*.py"):
-        if f.name.startswith("_"):
-            continue
-        module_name = f"auto_alpha_miner.strategy.{f.stem}"
-        importlib.import_module(module_name)
 
 def register_strategy(cls: type[BaseStrategy]) -> type[BaseStrategy]:
     """Decorator to register a strategy class by its name attribute."""
     STRATEGY_REGISTRY[cls.name] = cls
     return cls
+
 
 def reload_config(path: Path | None = None) -> None:
     """Reload config from disk (useful for testing)."""
@@ -57,5 +46,3 @@ def reload_config(path: Path | None = None) -> None:
     SYMBOL_MAP.update(_config.get("symbols", {}))
     UNIVERSES.clear()
     UNIVERSES.update(_config.get("universes", {}))
-
-_load_strategies() # Call on module load
