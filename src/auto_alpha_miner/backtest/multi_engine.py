@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import concurrent.futures
 from dataclasses import dataclass, field
+from functools import partial
 
 import pandas as pd
 
@@ -50,12 +52,27 @@ class MultiSymbolEngine:
         """
         engine = BacktestEngine(initial_capital=self.initial_capital)
 
-        # Run individual backtests
+        # Run individual backtests in parallel
         symbol_results: dict[str, BacktestResult] = {}
-        for symbol, df in data.items():
-            strat = strategy_cls()
-            result = engine.run(df, strat, symbol)
-            symbol_results[symbol] = result
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            # Create a partial function for engine.run to pass fixed arguments
+            _run_single_backtest = partial(self._run_single_backtest, engine=engine, strategy_cls=strategy_cls)
+            
+            # Map the function to the data items (symbol, df)
+            # The map function returns results in the order the inputs were submitted
+            futures = {executor.submit(_run_single_backtest, symbol, df): symbol for symbol, df in data.items()}
+            for future in concurrent.futures.as_completed(futures):
+                symbol = futures[future]
+                try:
+                    result = future.result()
+                    symbol_results[symbol] = result
+                except Exception as exc:
+                    print(f'{symbol} generated an exception: {exc}')
+                    # Optionally handle the exception, e.g., skip this symbol or log it
+                    pass
+        
+        # Ensure results are sorted by symbol for consistent behavior
+        symbol_results = {k: symbol_results[k] for k in sorted(symbol_results.keys())}
 
         if rebalance is None:
             # Fixed weights (original behavior)
@@ -177,3 +194,8 @@ class MultiSymbolEngine:
             rebal_dates.add(group.iloc[-1])
 
         return rebal_dates
+
+    @staticmethod
+    def _run_single_backtest(symbol: str, df: pd.DataFrame, engine: BacktestEngine, strategy_cls: type) -> BacktestResult:
+        strat = strategy_cls()
+        return engine.run(df, strat, symbol)
