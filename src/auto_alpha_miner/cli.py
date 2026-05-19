@@ -34,20 +34,20 @@ def run(
     save_chart: Optional[str] = typer.Option(None, help="Save chart to file path"),
 ) -> None:
     """Run a backtest for a single strategy on a symbol."""
-    from auto_alpha_miner.config import STRATEGY_REGISTRY
+    from auto_alpha_miner.config import STRATEGY_REGISTRY, settings
     from auto_alpha_miner.data import CachedCollector, YFinanceCollector
     from auto_alpha_miner.backtest.engine import BacktestEngine
     from auto_alpha_miner.evaluation.metrics import evaluate
     from auto_alpha_miner.evaluation.report import print_report, plot_report
 
-    _load_strategies()
+
 
     if strategy not in STRATEGY_REGISTRY:
         typer.echo(f"Unknown strategy: {strategy}")
         typer.echo(f"Available: {', '.join(STRATEGY_REGISTRY.keys())}")
         raise typer.Exit(1)
 
-    collector = CachedCollector(YFinanceCollector())
+    collector = CachedCollector(YFinanceCollector(), cache_expiry_days=settings.data_cache_expiry_days)
     typer.echo(f"Fetching {symbol} data ({start} ~ {end})...")
     df = collector.fetch(symbol, start, end)
 
@@ -71,15 +71,15 @@ def run_all(
     capital: float = typer.Option(100_000.0, help="Initial capital"),
 ) -> None:
     """Run all registered strategies on a symbol and compare."""
-    from auto_alpha_miner.config import STRATEGY_REGISTRY
+    from auto_alpha_miner.config import STRATEGY_REGISTRY, settings
     from auto_alpha_miner.data import CachedCollector, YFinanceCollector
     from auto_alpha_miner.backtest.engine import BacktestEngine
     from auto_alpha_miner.evaluation.metrics import evaluate
     from auto_alpha_miner.evaluation.report import print_report
 
-    _load_strategies()
 
-    collector = CachedCollector(YFinanceCollector())
+
+    collector = CachedCollector(YFinanceCollector(), cache_expiry_days=settings.data_cache_expiry_days)
     typer.echo(f"Fetching {symbol} data ({start} ~ {end})...")
     df = collector.fetch(symbol, start, end)
 
@@ -104,14 +104,14 @@ def run_portfolio(
     save_chart: Optional[str] = typer.Option(None, help="Save chart to file path"),
 ) -> None:
     """Run a strategy across multiple symbols with equal-weight portfolio allocation."""
-    from auto_alpha_miner.config import STRATEGY_REGISTRY, UNIVERSES
+    from auto_alpha_miner.config import STRATEGY_REGISTRY, settings, UNIVERSES
     from auto_alpha_miner.data import CachedCollector, YFinanceCollector
     from auto_alpha_miner.backtest.allocator import EqualWeightAllocator
     from auto_alpha_miner.backtest.multi_engine import MultiSymbolEngine
     from auto_alpha_miner.evaluation.metrics import evaluate_portfolio
     from auto_alpha_miner.evaluation.report import print_portfolio_report, plot_portfolio_report
 
-    _load_strategies()
+
 
     if universe not in UNIVERSES:
         typer.echo(f"Unknown universe: {universe}")
@@ -124,7 +124,7 @@ def run_portfolio(
         raise typer.Exit(1)
 
     symbols = UNIVERSES[universe]
-    collector = CachedCollector(YFinanceCollector())
+    collector = CachedCollector(YFinanceCollector(), cache_expiry_days=settings.data_cache_expiry_days)
 
     # Fetch data for all symbols
     data = {}
@@ -159,8 +159,8 @@ def run_portfolio(
 @app.command("list-strategies")
 def list_strategies() -> None:
     """List all available strategies."""
-    _load_strategies()
-    from auto_alpha_miner.config import STRATEGY_REGISTRY
+
+    from auto_alpha_miner.config import STRATEGY_REGISTRY, settings
 
     typer.echo("Available strategies:")
     for name, cls in STRATEGY_REGISTRY.items():
@@ -197,11 +197,11 @@ def research_init(
     from pathlib import Path
     from datetime import date
 
-    from auto_alpha_miner.config import STRATEGY_REGISTRY
+    from auto_alpha_miner.config import STRATEGY_REGISTRY, settings
     from auto_alpha_miner.research.journal import Journal, TriedApproach, create_default_journal
     from auto_alpha_miner.research.runner import run_cycle
 
-    _load_strategies()
+
 
     journal_path = Path(journal)
     if journal_path.exists():
@@ -256,11 +256,11 @@ def research_run(
     """Run a strategy backtest and output structured results."""
     from pathlib import Path
 
-    from auto_alpha_miner.config import STRATEGY_REGISTRY
+    from auto_alpha_miner.config import STRATEGY_REGISTRY, settings
     from auto_alpha_miner.research.journal import Journal
     from auto_alpha_miner.research.runner import run_research_cycle
 
-    _load_strategies()
+
 
     journal_path = Path(journal)
     if not journal_path.exists():
@@ -298,7 +298,7 @@ def research_validate(
     from pathlib import Path
     from auto_alpha_miner.research.validator import validate_strategy_file
 
-    _load_strategies()
+
 
     file_path = Path(file)
     valid, error = validate_strategy_file(file_path)
@@ -360,7 +360,7 @@ def dashboard(
     """Start the local web dashboard."""
     import uvicorn
 
-    _load_strategies()
+
     typer.echo(f"Starting dashboard at http://{host}:{port}")
     uvicorn.run(
         "auto_alpha_miner.dashboard.app:app",
