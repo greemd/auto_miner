@@ -9,6 +9,7 @@ from auto_alpha_miner.config import STRATEGY_REGISTRY, SYMBOL_MAP
 from auto_alpha_miner.data import CachedCollector, YFinanceCollector
 from auto_alpha_miner.evaluation.metrics import evaluate
 from auto_alpha_miner.research.journal import Journal
+from auto_alpha_miner.config import STRATEGY_DIR
 
 
 def get_strategies() -> list[str]:
@@ -98,6 +99,17 @@ def get_journal_data(journal_path: str = "research/journal.md") -> dict:
         },
     }
 
+
+def save_strategy_file(name: str, file_name: str, code: str):
+    """Save strategy code to a file."""
+    strategy_path = STRATEGY_DIR / file_name
+    strategy_path.write_text(code)
+
+    # Re-load strategies to make the new strategy available
+    # This is a simplified approach; a more robust solution might involve
+    # dynamic module reloading or a more sophisticated strategy management system.
+    from auto_alpha_miner.config import _load_strategies
+    _load_strategies()
 
 def backtest_result_to_dict(result: BacktestResult, metrics: dict) -> dict:
     """Convert BacktestResult + metrics to JSON-serializable dict."""

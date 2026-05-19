@@ -7,7 +7,7 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel
 
 from auto_alpha_miner.dashboard.app import templates
-from auto_alpha_miner.dashboard.services import get_strategies, get_symbols, run_backtest
+from auto_alpha_miner.dashboard.services import get_strategies, get_symbols, run_backtest, save_strategy_file
 
 router = APIRouter()
 
@@ -20,6 +20,12 @@ class BacktestRequest(BaseModel):
     capital: float = 100_000.0
 
 
+class SaveStrategyRequest(BaseModel):
+    name: str
+    file: str
+    code: str
+
+
 @router.get("/strategy", response_class=HTMLResponse)
 def strategy_page(request: Request):
     return templates.TemplateResponse(request, "strategy.html", context={
@@ -27,6 +33,22 @@ def strategy_page(request: Request):
         "strategies": get_strategies(),
         "symbols": get_symbols(),
     })
+
+
+@router.get("/strategy/editor", response_class=HTMLResponse)
+def strategy_editor_page(request: Request):
+    return templates.TemplateResponse(request, "strategy_editor.html", context={
+        "active": "strategy_editor",
+    })
+
+
+@router.post("/api/strategy/save")
+def api_save_strategy(req: SaveStrategyRequest):
+    try:
+        save_strategy_file(req.name, req.file, req.code)
+        return JSONResponse({"success": True})
+    except Exception as e:
+        return JSONResponse({"success": False, "error": str(e)}, status_code=400)
 
 
 @router.post("/api/backtest")

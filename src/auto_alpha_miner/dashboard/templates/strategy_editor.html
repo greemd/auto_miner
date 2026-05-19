@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}Strategy Editor — Auto Alpha Miner{% endblock %}
+{% block page_title %}Strategy Editor{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="form-row">
+        <div class="form-group" style="flex: 1;">
+            <label for="strategy-name">Strategy Name</label>
+            <input type="text" id="strategy-name" placeholder="MyNewStrategy">
+        </div>
+        <div class="form-group" style="flex: 1;">
+            <label for="strategy-file">Strategy File (e.g., my_strategy.py)</label>
+            <input type="text" id="strategy-file" placeholder="my_strategy.py">
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="strategy-code">Strategy Code</label>
+        <textarea id="strategy-code" rows="20" class="font-mono text-sm"></textarea>
+    </div>
+    <div class="form-group">
+        <button id="save-strategy-btn" class="btn btn-primary" onclick="saveStrategy()">Save Strategy</button>
+        <button id="generate-code-btn" class="btn btn-secondary" onclick="generateCode()">Generate Code (AI)</button>
+    </div>
+    <div id="editor-messages" class="mt-4"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    async function saveStrategy() {
+        const name = document.getElementById("strategy-name").value;
+        const file = document.getElementById("strategy-file").value;
+        const code = document.getElementById("strategy-code").value;
+        const messagesDiv = document.getElementById("editor-messages");
+
+        if (!name || !file || !code) {
+            messagesDiv.innerHTML = `<div class="error-msg">Please fill all fields.</div>`;
+            return;
+        }
+
+        try {
+            const response = await fetch("/api/strategy/save", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name, file, code })
+            });
+            const result = await response.json();
+
+            if (result.success) {
+                messagesDiv.innerHTML = `<div class="success-msg">Strategy saved successfully!</div>`;
+            } else {
+                messagesDiv.innerHTML = `<div class="error-msg">Error saving strategy: ${result.error}</div>`;
+            }
+        } catch (error) {
+            messagesDiv.innerHTML = `<div class="error-msg">Network error: ${error.message}</div>`;
+        }
+    }
+
+    async function generateCode() {
+        const name = document.getElementById("strategy-name").value;
+        const messagesDiv = document.getElementById("editor-messages");
+        messagesDiv.innerHTML = `<div class="info-msg">Generating code with AI...</div>`;
+
+        // Placeholder for AI code generation logic
+        // In a real implementation, this would call an LLM API
+        setTimeout(() => {
+            document.getElementById("strategy-code").value = `# AI Generated Strategy for ${name}\nclass ${name.replace(/[^a-zA-Z0-9_]/g, "")}Strategy:\n    def init(self):\n        pass\n\n    def next(self, data):\n        # Implement your strategy logic here\n        pass\n`;
+            messagesDiv.innerHTML = `<div class="success-msg">AI code generated! Please review and save.</div>`;
+        }, 2000);
+    }
+</script>
+{% endblock %}
