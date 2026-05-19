@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import yaml
 
@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 _DEFAULT_CONFIG_PATH = Path(__file__).resolve().parents[2] / "config.yaml"
 
 
-def _load_config(path: Path | None = None) -> dict:
+def _load_config(path: Path | None = None) -> dict[str, Any]:
     """Load YAML config file."""
     config_path = path or _DEFAULT_CONFIG_PATH
     if config_path.exists():
@@ -27,7 +27,7 @@ _config = _load_config()
 
 SYMBOL_MAP: dict[str, str] = _config.get("symbols", {})
 UNIVERSES: dict[str, list[str]] = _config.get("universes", {})
-RESEARCH_CONFIG: dict = _config.get("research", {})
+RESEARCH_CONFIG: dict[str, Any] = _config.get("research", {})
 
 STRATEGY_REGISTRY: dict[str, type[BaseStrategy]] = {}
 
