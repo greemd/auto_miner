@@ -243,3 +243,5 @@ auto_miner/
 │       └── static/                 # CSS + Plotly 차트 헬퍼 JS
 └── tests/                          # 67개 테스트
 ```
+
+phase c test
