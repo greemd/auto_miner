@@ -9,28 +9,28 @@ const darkLayout = {
     margin: { t: 36, r: 20, b: 40, l: 60 },
     paper_bgcolor: 'transparent',
     plot_bgcolor: 'transparent',
-    font: { size: 12, color: '#8b8fa3', family: 'Inter, sans-serif' },
+    font: { size: 12, color: '#5d6178', family: 'Inter, sans-serif' },
     xaxis: {
-        gridcolor: 'rgba(255,255,255,0.05)',
-        linecolor: 'rgba(255,255,255,0.08)',
-        zerolinecolor: 'rgba(255,255,255,0.08)',
+        gridcolor: 'rgba(0,0,0,0.06)',
+        linecolor: 'rgba(0,0,0,0.1)',
+        zerolinecolor: 'rgba(0,0,0,0.1)',
     },
     yaxis: {
-        gridcolor: 'rgba(255,255,255,0.05)',
-        linecolor: 'rgba(255,255,255,0.08)',
-        zerolinecolor: 'rgba(255,255,255,0.08)',
+        gridcolor: 'rgba(0,0,0,0.06)',
+        linecolor: 'rgba(0,0,0,0.1)',
+        zerolinecolor: 'rgba(0,0,0,0.1)',
     },
     hovermode: 'x unified',
     hoverlabel: {
-        bgcolor: '#1a1d27',
-        bordercolor: '#2a2d3a',
-        font: { size: 12, color: '#e4e6f0', family: 'JetBrains Mono, monospace' },
+        bgcolor: '#ffffff',
+        bordercolor: '#e2e5ee',
+        font: { size: 12, color: '#1a1d27', family: 'JetBrains Mono, monospace' },
     },
     legend: {
         bgcolor: 'transparent',
-        font: { color: '#8b8fa3' },
+        font: { color: '#5d6178' },
     },
-    modebar: { bgcolor: 'transparent', color: '#5d6178', activecolor: '#6366f1' },
+    modebar: { bgcolor: 'transparent', color: '#8b8fa3', activecolor: '#6366f1' },
 };
 
 const plotConfig = {
@@ -59,13 +59,13 @@ function renderEquityChart(containerId, data) {
             type: 'scatter',
             mode: 'lines',
             name: 'Buy & Hold',
-            line: { color: '#8b8fa3', width: 1.5, dash: 'dot' },
+            line: { color: '#a0a4b8', width: 1.5, dash: 'dot' },
         });
     }
 
     const layout = {
         ...darkLayout,
-        title: { text: `${data.strategy} vs Buy & Hold | ${data.symbol}`, font: { size: 14, color: '#e4e6f0' } },
+        title: { text: `${data.strategy} vs Buy & Hold | ${data.symbol}`, font: { size: 14, color: '#1a1d27' } },
         yaxis: { ...darkLayout.yaxis, title: { text: 'Equity ($)', font: { size: 11 } } },
     };
 
@@ -105,7 +105,7 @@ function renderCompareChart(containerId, results) {
 
     const layout = {
         ...darkLayout,
-        title: { text: `Strategy Comparison | ${results[0]?.symbol || ''}`, font: { size: 14, color: '#e4e6f0' } },
+        title: { text: `Strategy Comparison | ${results[0]?.symbol || ''}`, font: { size: 14, color: '#1a1d27' } },
         yaxis: { ...darkLayout.yaxis, title: { text: 'Equity ($)', font: { size: 11 } } },
     };
 
@@ -129,7 +129,7 @@ function renderHeatmap(containerId, data) {
         ],
         text: data.values.map(row => row.map(v => v !== null ? v.toFixed(2) : 'N/A')),
         texttemplate: '%{text}',
-        textfont: { size: 12, color: '#e4e6f0', family: 'JetBrains Mono' },
+        textfont: { size: 12, color: '#1a1d27', family: 'JetBrains Mono' },
         hovertemplate: '%{y} | %{x}<br>Sharpe: %{z:.2f}<extra></extra>',
         xgap: 3,
         ygap: 3,
@@ -161,10 +161,10 @@ function renderMetrics(containerId, metrics) {
         { label: 'Sortino', value: metrics.sortino_ratio, color: sharpeColor(metrics.sortino_ratio) },
         { label: 'Calmar', value: metrics.calmar_ratio, color: sharpeColor(metrics.calmar_ratio) },
         { label: 'Alpha', value: metrics.alpha + '%', color: retColor(metrics.alpha) },
-        { label: 'Beta', value: metrics.beta, color: '#8b8fa3' },
+        { label: 'Beta', value: metrics.beta, color: '#5d6178' },
         { label: 'Win Rate', value: metrics.win_rate + '%', color: metrics.win_rate >= 50 ? '#22c55e' : '#f59e0b' },
         { label: 'Profit Factor', value: metrics.profit_factor, color: metrics.profit_factor >= 1.5 ? '#22c55e' : metrics.profit_factor >= 1 ? '#f59e0b' : '#ef4444' },
-        { label: 'Trades', value: metrics.trade_count, color: '#8b8fa3' },
+        { label: 'Trades', value: metrics.trade_count, color: '#5d6178' },
         { label: 'Commission', value: '$' + metrics.total_commission.toLocaleString(), color: '#f59e0b' },
         { label: 'B&H Return', value: metrics.benchmark_return + '%', color: retColor(metrics.benchmark_return) },
     ];
