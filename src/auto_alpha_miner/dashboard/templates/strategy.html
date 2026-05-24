@@ -35,9 +35,12 @@
         </div>
         <div class="form-group" style="flex: 0 0 auto;">
             <label>&nbsp;</label>
-            <button id="run-btn" class="btn btn-primary" onclick="runBacktest()" data-i18n="backtest.run">
+            <button id="run-btn" class="btn btn-primary" onclick="runBacktest()" data-i18n="backtest.run" {% if public_mode %}disabled title="Disabled in public mode"{% endif %}>
                 Run Backtest
             </button>
+            {% if public_mode %}
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Read-only in public mode</div>
+            {% endif %}
         </div>
     </div>
 </div>
@@ -64,6 +67,10 @@
 {% block scripts %}
 <script>
 async function runBacktest() {
+    {% if public_mode %}
+    alert('Backtest is disabled in public mode.');
+    return;
+    {% endif %}
     const btn = document.getElementById('run-btn');
     btn.classList.add('loading');
     btn.textContent = t('backtest.running') || 'Running...';

@@ -7,6 +7,7 @@ from collections import defaultdict
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
 
+from auto_alpha_miner.config import PUBLIC_MODE
 from auto_alpha_miner.dashboard.app import templates
 from auto_alpha_miner.dashboard.services import get_journal_data
 
@@ -165,6 +166,7 @@ def overview(request: Request):
 
     return templates.TemplateResponse(request, "overview.html", context={
         "active": "overview",
+        "public_mode": PUBLIC_MODE,
         # AI Engine
         "ai_model": ai_model,
         "ai_engine": ai_engine,

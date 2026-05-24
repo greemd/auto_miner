@@ -24,7 +24,7 @@
     <div>
         <div class="section-title">
             <span data-i18n="research.nextsteps">Next Steps</span>
-            <span class="edit-toggle" onclick="toggleEdit('next-steps')" data-i18n="research.edit">edit</span>
+            {% if not public_mode %}<span class="edit-toggle" onclick="toggleEdit('next-steps')" data-i18n="research.edit">edit</span>{% endif %}
         </div>
         <div class="card editable-card" id="next-steps-card">
             <div id="next-steps-view">
@@ -66,7 +66,7 @@
     <div>
         <div class="section-title">
             <span data-i18n="research.directions">Research Directions</span>
-            <span class="edit-toggle" onclick="toggleEdit('directions')" data-i18n="research.edit">edit</span>
+            {% if not public_mode %}<span class="edit-toggle" onclick="toggleEdit('directions')" data-i18n="research.edit">edit</span>{% endif %}
         </div>
         <div class="card editable-card" id="directions-card">
             <div id="directions-view">
@@ -106,6 +106,7 @@
 </div>
 
 <!-- AI Research Cycle -->
+{% if not public_mode %}
 <div class="section-title" data-i18n="research.aicycle.title">AI Research Cycle</div>
 <div class="card" style="margin-bottom: 24px; border-color: rgba(99,102,241,0.25); background: linear-gradient(135deg, rgba(99,102,241,0.06) 0%, rgba(168,85,247,0.03) 100%);">
     <div style="display: flex; align-items: flex-start; gap: 20px;">
@@ -125,8 +126,10 @@
         <div id="ai-cycle-result" style="display: none; min-width: 200px;"></div>
     </div>
 </div>
+{% endif %}
 
 <!-- Manual Run -->
+{% if not public_mode %}
 <div class="section-title" data-i18n="research.manual.title">Manual Backtest</div>
 <div class="card run-research-card" style="margin-bottom: 24px;">
     <div class="run-research-header">
@@ -183,6 +186,7 @@
     </div>
     <div id="research-error" style="display: none; margin-top: 16px;"></div>
 </div>
+{% endif %}
 
 <div class="section-title" data-i18n="research.tried.title">Tried Approaches</div>
 {% for a in journal.approaches | reverse %}

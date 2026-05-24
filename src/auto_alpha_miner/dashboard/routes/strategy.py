@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Depends, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel
 
-from auto_alpha_miner.dashboard.app import templates
+from auto_alpha_miner.config import PUBLIC_MODE
+from auto_alpha_miner.dashboard.app import templates, require_private_mode
 from auto_alpha_miner.dashboard.services import get_strategies, get_symbols, run_backtest
 
 router = APIRouter()
@@ -24,13 +25,14 @@ class BacktestRequest(BaseModel):
 def strategy_page(request: Request):
     return templates.TemplateResponse(request, "strategy.html", context={
         "active": "strategy",
+        "public_mode": PUBLIC_MODE,
         "strategies": get_strategies(),
         "symbols": get_symbols(),
     })
 
 
 @router.post("/api/backtest")
-def api_backtest(req: BacktestRequest):
+def api_backtest(req: BacktestRequest, _=Depends(require_private_mode)):
     try:
         result = run_backtest(req.strategy, req.symbol, req.start, req.end, req.capital)
         return JSONResponse(result)
@@ -66,7 +68,7 @@ def cache_info():
 
 
 @router.post("/api/cache/clear")
-def cache_clear():
+def cache_clear(_=Depends(require_private_mode)):
     """Delete all cached data files."""
     from auto_alpha_miner.data import _CACHE_DIR
     if not _CACHE_DIR.exists():

@@ -61,7 +61,12 @@
     <main class="main-content">
         <header class="page-header">
             <h1 class="page-title">{% block page_title %}Dashboard{% endblock %}</h1>
-            <div class="header-right">{% block header_right %}{% endblock %}</div>
+            <div class="header-right">
+                {% if public_mode %}
+                <span class="badge badge-public" title="Read-only public view">Public Mode</span>
+                {% endif %}
+                {% block header_right %}{% endblock %}
+            </div>
         </header>
         <div class="page-body">
             {% block content %}{% endblock %}
