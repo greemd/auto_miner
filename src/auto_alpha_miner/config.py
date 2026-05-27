@@ -29,6 +29,7 @@ _config = _load_config()
 SYMBOL_MAP: dict[str, str] = _config.get("symbols", {})
 UNIVERSES: dict[str, list[str]] = _config.get("universes", {})
 RESEARCH_CONFIG: dict = _config.get("research", {})
+DASHBOARD_API_KEY: str = _config.get("dashboard", {}).get("api_key", "")
 
 STRATEGY_REGISTRY: dict[str, type[BaseStrategy]] = {}
 
