@@ -1,4 +1,7 @@
 # Auto Alpha Miner - Symbol Configuration
+
+dashboard:
+  api_key: "change-me-to-a-random-secret"
 # 별칭: yfinance 티커 매핑
 # yfinance 티커를 직접 사용할 수도 있습니다 (예: --symbol AAPL)
 
