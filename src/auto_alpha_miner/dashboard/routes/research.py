@@ -7,13 +7,13 @@ import traceback
 from datetime import date
 from pathlib import Path
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Depends, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel
 
-from auto_alpha_miner.dashboard.app import templates
+from auto_alpha_miner.config import PUBLIC_MODE, STRATEGY_REGISTRY
+from auto_alpha_miner.dashboard.app import templates, require_private_mode
 from auto_alpha_miner.dashboard.services import get_journal_data
-from auto_alpha_miner.config import STRATEGY_REGISTRY
 from auto_alpha_miner.research.journal import Journal, TriedApproach
 from auto_alpha_miner.research.runner import run_cycle
 
@@ -53,6 +53,7 @@ def research_page(request: Request):
     available = [s for s in strategies if s not in tested]
     return templates.TemplateResponse(request, "research.html", context={
         "active": "research",
+        "public_mode": PUBLIC_MODE,
         "journal": journal,
         "strategies": strategies,
         "available_strategies": available,
@@ -68,7 +69,7 @@ def api_journal():
 # --- Next Steps CRUD ---
 
 @router.post("/api/research/next-steps")
-def update_next_steps(req: UpdateListRequest):
+def update_next_steps(req: UpdateListRequest, _=Depends(require_private_mode)):
     journal = Journal(JOURNAL_PATH)
     journal.next_steps = req.items
     journal.save()
@@ -76,7 +77,7 @@ def update_next_steps(req: UpdateListRequest):
 
 
 @router.post("/api/research/next-steps/add")
-def add_next_step(req: AddItemRequest):
+def add_next_step(req: AddItemRequest, _=Depends(require_private_mode)):
     journal = Journal(JOURNAL_PATH)
     journal.next_steps.append(req.item)
     journal.save()
@@ -84,7 +85,7 @@ def add_next_step(req: AddItemRequest):
 
 
 @router.post("/api/research/next-steps/delete")
-def delete_next_step(req: DeleteItemRequest):
+def delete_next_step(req: DeleteItemRequest, _=Depends(require_private_mode)):
     journal = Journal(JOURNAL_PATH)
     if 0 <= req.index < len(journal.next_steps):
         journal.next_steps.pop(req.index)
@@ -95,7 +96,7 @@ def delete_next_step(req: DeleteItemRequest):
 # --- Research Directions CRUD ---
 
 @router.post("/api/research/directions")
-def update_directions(req: UpdateListRequest):
+def update_directions(req: UpdateListRequest, _=Depends(require_private_mode)):
     journal = Journal(JOURNAL_PATH)
     journal.research_directions = req.items
     journal.save()
@@ -103,7 +104,7 @@ def update_directions(req: UpdateListRequest):
 
 
 @router.post("/api/research/directions/add")
-def add_direction(req: AddItemRequest):
+def add_direction(req: AddItemRequest, _=Depends(require_private_mode)):
     journal = Journal(JOURNAL_PATH)
     journal.research_directions.append(req.item)
     journal.save()
@@ -111,7 +112,7 @@ def add_direction(req: AddItemRequest):
 
 
 @router.post("/api/research/directions/delete")
-def delete_direction(req: DeleteItemRequest):
+def delete_direction(req: DeleteItemRequest, _=Depends(require_private_mode)):
     journal = Journal(JOURNAL_PATH)
     if 0 <= req.index < len(journal.research_directions):
         journal.research_directions.pop(req.index)
@@ -134,7 +135,7 @@ def _ensure_strategies_loaded():
 
 
 @router.post("/api/research/run")
-def run_research(req: RunResearchRequest):
+def run_research(req: RunResearchRequest, _=Depends(require_private_mode)):
     """Run a strategy across all benchmark symbols and save results to journal."""
     _ensure_strategies_loaded()
 
@@ -199,7 +200,7 @@ def run_research(req: RunResearchRequest):
 
 
 @router.post("/api/research/ai-cycle")
-def run_ai_cycle():
+def run_ai_cycle(_=Depends(require_private_mode)):
     """Trigger a full AI research cycle (calls research_cycle.sh).
 
     This runs Claude Code to autonomously:

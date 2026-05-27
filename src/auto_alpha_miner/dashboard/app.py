@@ -4,9 +4,11 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+
+from auto_alpha_miner.config import PUBLIC_MODE
 
 _DASHBOARD_DIR = Path(__file__).parent
 _TEMPLATES_DIR = _DASHBOARD_DIR / "templates"
@@ -16,6 +18,13 @@ templates = Jinja2Templates(directory=str(_TEMPLATES_DIR))
 
 app = FastAPI(title="Auto Alpha Miner Dashboard")
 app.mount("/static", StaticFiles(directory=str(_STATIC_DIR)), name="static")
+
+
+def require_private_mode() -> None:
+    """Raise 403 if the server is running in public read-only mode."""
+    if PUBLIC_MODE:
+        raise HTTPException(status_code=403, detail="This action is disabled in public mode.")
+
 
 # Import and register routes
 from auto_alpha_miner.dashboard.routes import overview, strategy, compare, research, portfolio  # noqa: E402

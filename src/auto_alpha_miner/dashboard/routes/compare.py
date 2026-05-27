@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Depends, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel
 
-from auto_alpha_miner.dashboard.app import templates
+from auto_alpha_miner.config import PUBLIC_MODE
+from auto_alpha_miner.dashboard.app import templates, require_private_mode
 from auto_alpha_miner.dashboard.services import get_strategies, get_symbols, run_compare
 
 router = APIRouter()
@@ -24,13 +25,14 @@ class CompareRequest(BaseModel):
 def compare_page(request: Request):
     return templates.TemplateResponse(request, "compare.html", context={
         "active": "compare",
+        "public_mode": PUBLIC_MODE,
         "strategies": get_strategies(),
         "symbols": get_symbols(),
     })
 
 
 @router.post("/api/compare")
-def api_compare(req: CompareRequest):
+def api_compare(req: CompareRequest, _=Depends(require_private_mode)):
     try:
         results = run_compare(req.strategies, req.symbol, req.start, req.end, req.capital)
         return JSONResponse(results)
