@@ -35,7 +35,10 @@
         </div>
         <div class="form-group" style="flex: 0 0 auto;">
             <label>&nbsp;</label>
-            <button id="compare-btn" class="btn btn-primary" onclick="runCompare()" data-i18n="compare.run">Compare</button>
+            <button id="compare-btn" class="btn btn-primary" onclick="runCompare()" data-i18n="compare.run" {% if public_mode %}disabled title="Disabled in public mode"{% endif %}>Compare</button>
+            {% if public_mode %}
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Read-only in public mode</div>
+            {% endif %}
         </div>
     </div>
 </div>
@@ -57,6 +60,10 @@
 {% block scripts %}
 <script>
 async function runCompare() {
+    {% if public_mode %}
+    alert('Comparison is disabled in public mode.');
+    return;
+    {% endif %}
     const btn = document.getElementById('compare-btn');
     btn.classList.add('loading');
     btn.textContent = t('compare.running') || 'Running...';

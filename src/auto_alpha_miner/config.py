@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -31,6 +32,9 @@ RESEARCH_CONFIG: dict = _config.get("research", {})
 DASHBOARD_API_KEY: str = _config.get("dashboard", {}).get("api_key", "")
 
 STRATEGY_REGISTRY: dict[str, type[BaseStrategy]] = {}
+
+# Dashboard security: when True, sensitive write/trigger endpoints are blocked.
+PUBLIC_MODE: bool = os.environ.get("PUBLIC_MODE", "false").lower() in ("1", "true", "yes")
 
 
 def register_strategy(cls: type[BaseStrategy]) -> type[BaseStrategy]:

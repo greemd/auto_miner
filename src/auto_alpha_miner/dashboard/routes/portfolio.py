@@ -5,11 +5,12 @@ from __future__ import annotations
 import importlib
 from pathlib import Path
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Depends, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel
 
-from auto_alpha_miner.dashboard.app import templates
+from auto_alpha_miner.config import PUBLIC_MODE
+from auto_alpha_miner.dashboard.app import templates, require_private_mode
 from auto_alpha_miner.dashboard.services import get_strategies, get_symbols
 from auto_alpha_miner.config import STRATEGY_REGISTRY, UNIVERSES
 from auto_alpha_miner.data import CachedCollector, YFinanceCollector
@@ -44,6 +45,7 @@ def portfolio_page(request: Request):
     _ensure_strategies()
     return templates.TemplateResponse(request, "portfolio.html", context={
         "active": "portfolio",
+        "public_mode": PUBLIC_MODE,
         "strategies": list(STRATEGY_REGISTRY.keys()),
         "universes": {name: symbols for name, symbols in UNIVERSES.items()},
         "allocators": list(ALLOCATOR_REGISTRY.keys()),
@@ -51,7 +53,7 @@ def portfolio_page(request: Request):
 
 
 @router.post("/api/portfolio")
-def api_portfolio(req: PortfolioRequest):
+def api_portfolio(req: PortfolioRequest, _=Depends(require_private_mode)):
     _ensure_strategies()
 
     if req.strategy not in STRATEGY_REGISTRY:

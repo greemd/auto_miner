@@ -4,13 +4,15 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from auto_alpha_miner.config import DASHBOARD_API_KEY
+
+from auto_alpha_miner.config import PUBLIC_MODE
 
 _DASHBOARD_DIR = Path(__file__).parent
 _TEMPLATES_DIR = _DASHBOARD_DIR / "templates"
@@ -71,6 +73,12 @@ document.getElementById('keyInput').addEventListener('keydown',function(e){if(e.
 
 
 app.add_middleware(APIKeyMiddleware)
+
+def require_private_mode() -> None:
+    """Raise 403 if the server is running in public read-only mode."""
+    if PUBLIC_MODE:
+        raise HTTPException(status_code=403, detail="This action is disabled in public mode.")
+
 
 # Import and register routes
 from auto_alpha_miner.dashboard.routes import overview, strategy, compare, research, portfolio  # noqa: E402
